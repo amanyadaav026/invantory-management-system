@@ -91,7 +91,7 @@ def add_product():
 
     conn.commit()
     conn.close()
-
+    flash("Product added successfully!", "success")
     return redirect(url_for("home"))
 
 
@@ -108,7 +108,7 @@ def delete_product(product_id):
 
     conn.commit()
     conn.close()
-
+    flash("Product deleted successfully!", "success")
     return redirect(url_for("home"))
 
 
@@ -155,7 +155,7 @@ def edit_product(product_id):
 
     conn.commit()
     conn.close()
-
+    flash("Product updated successfully!", "success")
     return redirect(url_for("home"))
 
 
