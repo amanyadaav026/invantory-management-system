@@ -53,8 +53,21 @@ def home():
 def add_product():
     name = request.form["name"].strip()
     category = request.form["category"].strip()
-    quantity = int(request.form["quantity"])
-    price = float(request.form["price"])
+    if not name or not category:
+        flash("Product name and category cannot be empty.", "error")
+        return redirect(url_for("home"))
+
+    try:
+        quantity = int(request.form["quantity"])
+        price = float(request.form["price"])
+    except ValueError:
+        flash("Quantity must be a whole number and price must be a valid number.", "error")
+        return redirect(url_for("home"))
+    
+    if quantity < 0 or price < 0:
+        flash("Quantity and price cannot be negative.", "error")
+        return redirect(url_for("home"))
+
 
     conn = sqlite3.connect("inventory.db")
 
@@ -103,10 +116,35 @@ def delete_product(product_id):
 def edit_product(product_id):
     name = request.form["name"]
     category = request.form["category"]
-    quantity = int(request.form["quantity"])
-    price = float(request.form["price"])
+    
+    if not name or not category:
+        flash("Product name and category cannot be empty.", "error")
+        return redirect(url_for("home"))
+    
+    try:
+        quantity = int(request.form["quantity"])
+        price = float(request.form["price"])
+    except ValueError:
+        flash("Quantity must be a whole number and price must be a valid number.", "error")
+        return redirect(url_for("home"))
+    
+    if quantity < 0 or price < 0:
+        flash("Quantity and price cannot be negative.", "error")
+        return redirect(url_for("home"))
 
     conn = sqlite3.connect("inventory.db")
+    existing_product = conn.execute(
+        """SELECT id FROM products
+           WHERE LOWER(name) = LOWER(?)
+           AND LOWER(category) = LOWER(?)
+           AND id != ?""",
+        (name, category, product_id)
+    ).fetchone()
+    
+    if existing_product:
+        conn.close()
+        flash("Duplicate product! This product already exists in this category.", "error")
+        return redirect(url_for("home"))
 
     conn.execute(
         """UPDATE products
