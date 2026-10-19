@@ -1,8 +1,9 @@
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 
 app = Flask(__name__)
+app.secret_key = "inventory-dev-secret-key"
 
 def init_db():
     conn = sqlite3.connect("inventory.db")
@@ -47,17 +48,31 @@ def home():
     )
 
 
+
 @app.route("/add-product", methods=["POST"])
 def add_product():
-    name = request.form["name"]
-    category = request.form["category"]
+    name = request.form["name"].strip()
+    category = request.form["category"].strip()
     quantity = int(request.form["quantity"])
     price = float(request.form["price"])
 
     conn = sqlite3.connect("inventory.db")
 
+    existing_product = conn.execute(
+        """SELECT id FROM products
+           WHERE LOWER(name) = LOWER(?)
+           AND LOWER(category) = LOWER(?)""",
+        (name, category)
+    ).fetchone()
+
+    if existing_product:
+        conn.close()
+        flash("Duplicate product! This product already exists in this category.", "error")
+        return redirect(url_for("home"))
+
     conn.execute(
-        "INSERT INTO products (name, category, quantity, price) VALUES (?, ?, ?, ?)",
+        """INSERT INTO products (name, category, quantity, price)
+           VALUES (?, ?, ?, ?)""",
         (name, category, quantity, price)
     )
 
@@ -65,6 +80,7 @@ def add_product():
     conn.close()
 
     return redirect(url_for("home"))
+
 
 
 
