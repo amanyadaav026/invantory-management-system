@@ -1,5 +1,11 @@
 
 const searchInput = document.getElementById("search-input");
+const clearSearchButton = document.getElementById("clear-search");
+
+clearSearchButton.addEventListener("click", function () {
+    searchInput.value = "";
+    searchInput.dispatchEvent(new Event("input"));
+});
 const productRows = document.querySelectorAll("#product-list tr");
 const noResultsRow = document.createElement("tr");
 noResultsRow.id = "no-results-row";
