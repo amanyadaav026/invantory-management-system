@@ -178,3 +178,13 @@ td {
     color: #b91c1c;
     border: 1px solid #fecaca;
 }
+
+/* Low stock product warning */
+.low-stock {
+    background-color: #fff3cd;
+}
+
+/* Out of stock product warning */
+.out-of-stock {
+    background-color: #f8d7da;
+}

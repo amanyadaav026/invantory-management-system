@@ -87,7 +87,7 @@
                 
                 <tbody id="product-list">
                     {% for product in products %}
-                    <tr>
+                    <tr class="{% if product.quantity == 0 %}out-of-stock{% elif product.quantity <= 5 %}low-stock{% endif %}">
                         <td>{{ product.id }}</td>
                         <td>{{ product.name }}</td>
                         <td>{{ product.category }}</td>
