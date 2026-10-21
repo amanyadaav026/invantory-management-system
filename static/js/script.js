@@ -19,28 +19,7 @@ noResultsRow.style.display = "none";
 document.getElementById("product-list").appendChild(noResultsRow);
 
 
-searchInput.addEventListener("input", function () {
-    const searchValue = searchInput.value.toLowerCase().trim();
-    let visibleProducts = 0;
-
-    productRows.forEach(function (row) {
-        const productName = row.cells[1].textContent.toLowerCase();
-        const productCategory = row.cells[2].textContent.toLowerCase();
-
-        if (
-            productName.includes(searchValue) ||
-            productCategory.includes(searchValue)
-        ) {
-            row.style.display = "";
-            visibleProducts++;
-        } else {
-            row.style.display = "none";
-        }
-    });
-
-    noResultsRow.style.display =
-        visibleProducts === 0 ? "" : "none";
-});
+searchInput.addEventListener("input", applyFilters);
 
 
 const sortSelect = document.getElementById("sort-products");
@@ -83,3 +62,57 @@ sortSelect.addEventListener("change", function () {
     });
 });
 
+const categoryFilter = document.getElementById("category-filter");
+const categoryRows = document.querySelectorAll("#product-list tr");
+
+const categories = new Set();
+
+categoryRows.forEach(function (row) {
+    if (row.cells.length === 7) {
+        const category = row.cells[2].textContent.trim();
+        categories.add(category);
+    }
+});
+
+categories.forEach(function (category) {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+});
+
+
+function applyFilters() {
+    const searchValue = searchInput.value.toLowerCase().trim();
+    const selectedCategory = categoryFilter.value;
+    let visibleProducts = 0;
+
+    productRows.forEach(function (row) {
+        if (row.cells.length !== 7) {
+            return;
+        }
+
+        const productName = row.cells[1].textContent.toLowerCase().trim();
+        const productCategory = row.cells[2].textContent.trim();
+
+        const matchesSearch =
+            productName.includes(searchValue) ||
+            productCategory.toLowerCase().includes(searchValue);
+
+        const matchesCategory =
+            selectedCategory === "all" ||
+            productCategory === selectedCategory;
+
+        if (matchesSearch && matchesCategory) {
+            row.style.display = "";
+            visibleProducts++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    noResultsRow.style.display =
+        visibleProducts === 0 ? "" : "none";
+}
+
+categoryFilter.addEventListener("change", applyFilters);
