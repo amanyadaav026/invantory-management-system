@@ -42,3 +42,44 @@ searchInput.addEventListener("input", function () {
         visibleProducts === 0 ? "" : "none";
 });
 
+
+const sortSelect = document.getElementById("sort-products");
+const productList = document.getElementById("product-list");
+
+sortSelect.addEventListener("change", function () {
+    const rows = Array.from(productList.querySelectorAll("tr"))
+        .filter(row => row.cells.length === 7);
+
+    const sortValue = sortSelect.value;
+
+    rows.sort(function (a, b) {
+        if (sortValue === "name-asc") {
+            return a.cells[1].textContent.trim().localeCompare(
+                b.cells[1].textContent.trim()
+            );
+        }
+
+        if (sortValue === "quantity-asc") {
+            return Number(a.cells[3].textContent) -
+                   Number(b.cells[3].textContent);
+        }
+
+        if (sortValue === "price-asc") {
+            return Number(a.cells[4].textContent.replace("₹", "")) -
+                   Number(b.cells[4].textContent.replace("₹", ""));
+        }
+
+        if (sortValue === "price-desc") {
+            return Number(b.cells[4].textContent.replace("₹", "")) -
+                   Number(a.cells[4].textContent.replace("₹", ""));
+        }
+
+        return Number(b.cells[0].textContent) -
+               Number(a.cells[0].textContent);
+    });
+
+    rows.forEach(function (row) {
+        productList.appendChild(row);
+    });
+});
+
