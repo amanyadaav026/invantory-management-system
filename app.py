@@ -36,6 +36,10 @@ def home():
     total_products = len(products)
     low_stock = sum(1 for product in products if 0 < product["quantity"] <= 5)
     out_of_stock = sum(1 for product in products if product["quantity"] == 0)
+    total_inventory_value = sum(
+        product["quantity"] * product["price"]
+        for product in products
+    )
 
     conn.close()
 
@@ -44,7 +48,8 @@ def home():
         products=products,
         total_products=total_products,
         low_stock=low_stock,
-        out_of_stock=out_of_stock
+        out_of_stock=out_of_stock,
+        total_inventory_value=total_inventory_value
     )
 
 

@@ -38,6 +38,11 @@
                 <h3>Out of Stock</h3>
                 <p id="out-of-stock">{{ out_of_stock }}</p>
             </div>
+            
+            <div class="card">
+                <h3>Total Inventory Value</h3>
+                <p id="inventory-value">₹{{ "%.2f"|format(total_inventory_value) }}</p>
+            </div>
         </section>
         
         <section class="products-section add-product-section">
