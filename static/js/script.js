@@ -116,3 +116,38 @@ function applyFilters() {
 }
 
 categoryFilter.addEventListener("change", applyFilters);
+
+
+/* Step 6: Stock Overview Progress Bars */
+
+document.querySelectorAll(".stock-progress-fill").forEach(bar => {
+    const count = Number(bar.dataset.count);
+    const total = Number(bar.dataset.total);
+
+    const percentage = total > 0
+        ? (count / total) * 100
+        : 0;
+
+    bar.style.width = `${percentage}%`;
+});
+
+
+/* ========================================
+   Step 8: Dynamic Sidebar Navigation
+======================================== */
+
+const sidebarLinks = document.querySelectorAll(".sidebar-nav .nav-link");
+
+function updateActiveLink(activeLink) {
+    sidebarLinks.forEach(function (link) {
+        link.classList.remove("active");
+    });
+
+    activeLink.classList.add("active");
+}
+
+sidebarLinks.forEach(function (link) {
+    link.addEventListener("click", function () {
+        updateActiveLink(link);
+    });
+});

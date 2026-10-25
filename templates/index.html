@@ -4,147 +4,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Management System</title>
+    <title>StockTrack | Inventory Management</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="app-layout">
 
-    <header>
-        <h1>Inventory Management System</h1>
-        <p>Manage your products and stock in one place.</p>
-    </header>
+        <aside class="sidebar">
+            <a class="brand" href="{{ url_for('home') }}">
+                <span class="brand-icon">◆</span>
+                <span>StockTrack</span>
+            </a>
 
-    <main>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="flash-message {{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endwith %}
+            <nav class="sidebar-nav">
+                <a class="nav-link active" href="{{ url_for('home') }}">
+                    <span class="nav-icon">⌂</span> Dashboard
+                </a>
+                <a class="nav-link" href="#products">
+                    <span class="nav-icon">◇</span> Products
+                </a>
+                <a class="nav-link" href="#add-product">
+                    <span class="nav-icon">＋</span> Add Product
+                </a>
+                <a class="nav-link" href="#stock-overview">
+                    <span class="nav-icon">▥</span> Stock Overview
+                </a>
+            </nav>
 
-        <section class="dashboard">
-            <div class="card">
-                <h3>Total Products</h3>
-                <p id="total-products">{{ total_products }}</p>
+            <div class="sidebar-footer">
+                <span class="online-dot"></span>
+                <span>System Online</span>
+                <small>StockTrack · Inventory Manager</small>
             </div>
+        </aside>
 
-            <div class="card">
-                <h3>Low Stock Items</h3>
-                <p id="low-stock">{{ low_stock }}</p>
-            </div>
-
-            <div class="card">
-                <h3>Out of Stock</h3>
-                <p id="out-of-stock">{{ out_of_stock }}</p>
-            </div>
-            
-            <div class="card">
-                <h3>Total Inventory Value</h3>
-                <p id="inventory-value">₹{{ "%.2f"|format(total_inventory_value) }}</p>
-            </div>
-        </section>
-        
-        <section class="products-section add-product-section">
-            <h2>Add New Product</h2>
-            
-            <form id="product-form" action="{{ url_for('add_product') }}" method="POST">
-                <div class="form-group">
-                    <label for="product-name">Product Name</label>
-                    <input type="text" id="product-name" name="name" required>
+        <div class="main-area">
+            <header class="topbar">
+                <div class="topbar-breadcrumb">
+                    <span class="breadcrumb-page">Dashboard</span>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">Overview</span>
                 </div>
                 
-                <div class="form-group">
-                    <label for="product-category">Category</label>
-                    <input type="text" id="product-category" name="category" required>
+                <div class="user-profile">
+                    <span class="avatar">ST</span>
+                    <span>StockTrack</span>
                 </div>
-                
-                <div class="form-group">
-                    <label for="product-quantity">Quantity</label>
-                    <input type="number" id="product-quantity" name="quantity" min="0" step="1" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="product-price">Price (₹)</label>
-                    <input type="number" id="product-price" name="price" min="0" step="0.01" required>
-                </div>
-                
-                <button type="submit">Add Product</button>
-            </form>
-        </section>
+            </header>
 
+            <main class="dashboard-main">
 
-        <section class="products-section">
-            <h2>Product Inventory</h2>
-            <input type="text" id="search-input" placeholder="Search products by name...">
-            <button type="button" id="clear-search">Clear Search</button>
-            <label for="sort-products">Sort by:</label>
-            <select id="sort-products">
-                <option value="default">Default Order</option>
-                <option value="name-asc">Product Name (A–Z)</option>
-                <option value="quantity-asc">Quantity (Low to High)</option>
-                <option value="price-asc">Price (Low to High)</option>
-                <option value="price-desc">Price (High to Low)</option>
-            </select>
-            <label for="category-filter">Filter by Category:</label>
-            <select id="category-filter">
-                <option value="all">All Categories</option>
-            </select>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product ID</th>
-                        <th>Product Name</th>
-                        <th>Category</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                        <th>Stock Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                
-                <tbody id="product-list">
-                    {% for product in products %}
-                    <tr class="{% if product.quantity == 0 %}out-of-stock{% elif product.quantity <= 5 %}low-stock{% endif %}">
-                        <td>{{ product.id }}</td>
-                        <td>{{ product.name }}</td>
-                        <td>{{ product.category }}</td>
-                        <td>{{ product.quantity }}</td>
-                        <td>₹{{ "%.2f"|format(product.price) }}</td>
-                        <td>
-                            {% if product.quantity == 0 %}
-                                <span class="stock-badge out-of-stock-badge">Out of Stock</span>
-                            {% elif product.quantity <= 5 %}
-                                <span class="stock-badge low-stock-badge">Low Stock</span>
-                            {% else %}
-                                <span class="stock-badge in-stock-badge">In Stock</span>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            <form action="{{ url_for('edit_product', product_id=product.id) }}" method="POST">
-                                <input type="text" name="name" value="{{ product.name }}">
-                                <input type="text" name="category" value="{{ product.category }}">
-                                <input type="number" name="quantity" value="{{ product.quantity }}" min="0" step="1" required>
-                                <input type="number" name="price" value="{{ product.price }}" min="0" step="0.01" required>
-                                <button type="submit">Update</button>
-                            </form>
-                            <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST">
-                                <button type="submit" onclick="return confirm('Are you sure you want to delete this product?');">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5">No products added yet.</td>
-                    </tr>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            {{ message }}
+                        </div>
                     {% endfor %}
-                </tbody>
+                {% endwith %}
 
-            </table>
-        </section>
-    </main>
+                <section class="page-heading">
+                    <div>
+                        <h1>StockTrack Dashboard</h1>
+                        <p>Manage your products and stock in one place.</p>
+                    </div>
+                    <span class="page-tag">Inventory Overview</span>
+                </section>
+
+                <section class="dashboard">
+                    <div class="card card-blue">
+                        <div class="card-icon">▦</div>
+                        <div class="card-content">
+                            <h3>Total Products</h3>
+                            <p id="total-products">{{ total_products }}</p>
+                        </div>
+                    </div>
+
+                    <div class="card card-orange">
+                        <div class="card-icon">⚠</div>
+                        <div class="card-content">
+                            <h3>Low Stock</h3>
+                            <p id="low-stock">{{ low_stock }}</p>
+                        </div>
+                    </div>
+
+                    <div class="card card-red">
+                        <div class="card-icon">⊖</div>
+                        <div class="card-content">
+                            <h3>Out of Stock</h3>
+                            <p id="out-of-stock">{{ out_of_stock }}</p>
+                        </div>
+                    </div>
+
+                    <div class="card card-green">
+                        <div class="card-icon">▤</div>
+                        <div class="card-content">
+                            <h3>Total Inventory Value</h3>
+                            <p id="inventory-value">₹{{ "%.2f"|format(total_inventory_value) }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="products-section" id="products">
+                    <div class="section-heading">
+                        <div>
+                            <h2><span class="heading-icon">◇</span> Products</h2>
+                            <p>View, search and manage your inventory.</p>
+                        </div>
+                        <a href="#add-product" class="primary-button">＋ Add Product</a>
+                    </div>
+
+                    <div class="filter-toolbar">
+                        <div class="search-control">
+                            <span>⌕</span>
+                            <input type="text" id="search-input" placeholder="Search products by name...">
+                        </div>
+
+                        <div class="filter-control">
+                            <label for="category-filter">Category</label>
+                            <select id="category-filter">
+                                <option value="all">All Categories</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-control sort-control">
+                            <label for="sort-products">Sort by</label>
+                            <select id="sort-products">
+                                <option value="default">Default Order</option>
+                                <option value="name-asc">Product Name (A–Z)</option>
+                                <option value="quantity-asc">Quantity (Low to High)</option>
+                                <option value="price-asc">Price (Low to High)</option>
+                                <option value="price-desc">Price (High to Low)</option>
+                            </select>
+                        </div>
+
+                        <button type="button" id="clear-search" class="secondary-button">↻ Clear</button>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product Name</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Stock Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="product-list">
+                                {% for product in products %}
+                                <tr class="{% if product.quantity == 0 %}out-of-stock{% elif product.quantity <= 5 %}low-stock{% endif %}">
+                                    <td>{{ product.id }}</td>
+                                    <td class="product-name-cell">{{ product.name }}</td>
+                                    <td>{{ product.category }}</td>
+                                    <td>{{ product.quantity }}</td>
+                                    <td>₹{{ "%.2f"|format(product.price) }}</td>
+                                    <td>
+                                        {% if product.quantity == 0 %}
+                                            <span class="stock-badge out-of-stock-badge">Out of Stock</span>
+                                        {% elif product.quantity <= 5 %}
+                                            <span class="stock-badge low-stock-badge">Low Stock</span>
+                                        {% else %}
+                                            <span class="stock-badge in-stock-badge">In Stock</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <details class="edit-details">
+                                                <summary class="action-button edit-button" title="Edit product">✎</summary>
+                                                <form class="inline-edit-form" action="{{ url_for('edit_product', product_id=product.id) }}" method="POST">
+                                                    <h3>Edit Product #{{ product.id }}</h3>
+
+                                                    <label>Product Name
+                                                        <input type="text" name="name" value="{{ product.name }}" required>
+                                                    </label>
+
+                                                    <label>Category
+                                                        <input type="text" name="category" value="{{ product.category }}" required>
+                                                    </label>
+
+                                                    <label>Quantity
+                                                        <input type="number" name="quantity" value="{{ product.quantity }}" min="0" step="1" required>
+                                                    </label>
+
+                                                    <label>Price (₹)
+                                                        <input type="number" name="price" value="{{ product.price }}" min="0" step="0.01" required>
+                                                    </label>
+
+                                                    <button type="submit" class="primary-button">Save Changes</button>
+                                                </form>
+                                            </details>
+
+                                            <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST">
+                                                <button type="submit" class="action-button delete-button" title="Delete product" onclick="return confirm('Are you sure you want to delete this product?');">×</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr class="empty-products-row">
+                                    <td colspan="7">No products added yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-footer">
+                        <span>Inventory products · Live database data</span>
+                    </div>
+                </section>
+
+                <section class="bottom-grid">
+                    <section class="products-section add-product-section" id="add-product">
+                        <div class="section-heading">
+                            <div>
+                                <h2><span class="heading-icon add-icon">＋</span> Add New Product</h2>
+                                <p>Fill in the details to add a product to your inventory.</p>
+                            </div>
+                        </div>
+
+                        <form id="product-form" action="{{ url_for('add_product') }}" method="POST">
+                            <div class="form-group">
+                                <label for="product-name">Product Name</label>
+                                <input type="text" id="product-name" name="name" placeholder="Enter product name" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="product-category">Category</label>
+                                <input type="text" id="product-category" name="category" placeholder="e.g. Electronics" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="product-price">Price (₹)</label>
+                                <input type="number" id="product-price" name="price" min="0" step="0.01" placeholder="Enter price" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="product-quantity">Stock Quantity</label>
+                                <input type="number" id="product-quantity" name="quantity" min="0" step="1" placeholder="Enter quantity" required>
+                            </div>
+
+                            <button type="submit" class="primary-button form-submit">＋ Add Product</button>
+                        </form>
+                    </section>
+
+                    <section class="products-section stock-overview" id="stock-overview">
+                        <div class="section-heading">
+                            <div>
+                                <h2><span class="heading-icon">▥</span> Stock Overview</h2>
+                                <p>Current stock status</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stock-summary">
+                            {% set in_stock = total_products - low_stock - out_of_stock %}
+                            
+                            <div class="stock-summary-item">
+                                <div class="stock-summary-row">
+                                    <span class="legend-dot legend-green"></span>
+                                    <span>In Stock</span>
+                                    <strong>{{ in_stock }}</strong>
+                                </div>
+                                <div class="stock-progress">
+                                    <div class="stock-progress-fill progress-green"
+                                         data-count="{{ in_stock }}"
+                                         data-total="{{ total_products }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stock-summary-item">
+                                <div class="stock-summary-row">
+                                    <span class="legend-dot legend-orange"></span>
+                                    <span>Low Stock</span>
+                                    <strong>{{ low_stock }}</strong>
+                                </div>
+                                <div class="stock-progress">
+                                    <div class="stock-progress-fill progress-orange"
+                                         data-count="{{ low_stock }}"
+                                         data-total="{{ total_products }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stock-summary-item">
+                                <div class="stock-summary-row">
+                                    <span class="legend-dot legend-red"></span>
+                                    <span>Out of Stock</span>
+                                    <strong>{{ out_of_stock }}</strong>
+                                </div>
+                                <div class="stock-progress">
+                                    <div class="stock-progress-fill progress-red"
+                                         data-count="{{ out_of_stock }}"
+                                         data-total="{{ total_products }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="overview-note">
+                            Based on {{ total_products }} products in your inventory.
+                        </div>
+                    </section>
+                </section>
+
+                <footer class="app-footer">
+                    StockTrack · Inventory Management System
+                </footer>
+            </main>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
