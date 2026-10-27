@@ -158,6 +158,47 @@
                             </div>
                         </div>
                     {% endif %}
+                    
+                    <script type="application/json" id="analytics-chart-data">
+                    [
+                        {% for category in category_analytics %}
+                        {
+                            "category": {{ category.category | tojson }},
+                            "inventory_value": {{ (category.inventory_value or 0) | float }},
+                            "total_quantity": {{ (category.total_quantity or 0) | int }}
+                        }{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                    </script>
+                    
+                    <!-- Dashboard Charts -->
+                    <div class="dashboard-charts">
+                        <div class="chart-card">
+                            <div class="chart-card-heading">
+                                <div>
+                                    <h3>Inventory Value by Category</h3>
+                                    <p>Compare the value of stock across categories.</p>
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="inventoryValueChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <div class="chart-card-heading">
+                                <div>
+                                    <h3>Stock Distribution</h3>
+                                    <p>Compare total units across categories.</p>
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="stockDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </section>
                 
                 <section class="analytics-section" id="analytics">
@@ -459,6 +500,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

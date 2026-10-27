@@ -151,3 +151,90 @@ sidebarLinks.forEach(function (link) {
         updateActiveLink(link);
     });
 });
+/* ========================================
+   StockTrack Dashboard Charts
+======================================== */
+
+document.addEventListener("DOMContentLoaded", function () {
+    const valueCanvas = document.getElementById("inventoryValueChart");
+    const distributionCanvas = document.getElementById("stockDistributionChart");
+
+    // Stop if the chart containers are not on this page
+    if (!valueCanvas || !distributionCanvas) {
+        return;
+    }
+
+    // Read chart data passed from Flask through the HTML
+    const analyticsDataElement = document.getElementById("analytics-chart-data");
+
+    if (!analyticsDataElement) {
+        return;
+    }
+
+    const analyticsData = JSON.parse(analyticsDataElement.textContent);
+    const categories = analyticsData.map(item => item.category);
+    const inventoryValues = analyticsData.map(item => item.inventory_value);
+    const quantities = analyticsData.map(item => item.total_quantity);
+
+    // Inventory Value Chart
+    new Chart(valueCanvas, {
+        type: "bar",
+        data: {
+            labels: categories,
+            datasets: [{
+                label: "Inventory Value (₹)",
+                data: inventoryValues,
+                backgroundColor: "#2563eb",
+                borderRadius: 6,
+                maxBarThickness: 48
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Stock Distribution Chart
+    new Chart(distributionCanvas, {
+        type: "doughnut",
+        data: {
+            labels: categories,
+            datasets: [{
+                label: "Total Quantity",
+                data: quantities,
+                backgroundColor: [
+                    "#2563eb",
+                    "#14b8a6",
+                    "#f59e0b",
+                    "#8b5cf6",
+                    "#ec4899",
+                    "#64748b",
+                    "#22c55e",
+                    "#f97316"
+                ],
+                borderWidth: 2,
+                borderColor: "#ffffff"
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+});
