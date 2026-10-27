@@ -1,6 +1,8 @@
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, Response
 import sqlite3
+import csv
+import io
 
 app = Flask(__name__)
 app.secret_key = "inventory-dev-secret-key"
@@ -77,7 +79,49 @@ def home():
         out_of_stock_products=out_of_stock_products
     )
 
+@app.route("/export-inventory")
+def export_inventory():
+    conn = sqlite3.connect("inventory.db")
+    conn.row_factory = sqlite3.Row
 
+    products = conn.execute(
+        "SELECT id, name, category, quantity, price FROM products ORDER BY id ASC"
+    ).fetchall()
+
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "Product ID",
+        "Product Name",
+        "Category",
+        "Quantity",
+        "Unit Price (INR)",
+        "Inventory Value (INR)"
+    ])
+
+    for product in products:
+        writer.writerow([
+            product["id"],
+            product["name"],
+            product["category"],
+            product["quantity"],
+            f'{product["price"]:.2f}',
+            f'{product["quantity"] * product["price"]:.2f}'
+        ])
+
+    csv_data = "\ufeff" + output.getvalue()
+    output.close()
+
+    return Response(
+        csv_data,
+        mimetype="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": "attachment; filename=stocktrack_inventory.csv"
+        }
+    )
 
 @app.route("/add-product", methods=["POST"])
 def add_product():

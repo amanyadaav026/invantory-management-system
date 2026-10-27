@@ -1693,7 +1693,7 @@ td.product-name-cell {
         padding: 16px;
         border-radius: 14px;
     }
-    
+
     .stock-alert-item {
         flex-wrap: wrap;
         gap: 12px;
@@ -1710,5 +1710,42 @@ td.product-name-cell {
 
     .alert-view-link {
         margin-left: auto;
+    }
+}
+
+/* Products section action buttons */
+.section-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px 16px;
+    color: #2563eb;
+    background: #ffffff;
+    border: 1px solid #dbe5f5;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.secondary-button:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+@media (max-width: 640px) {
+    .section-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 }

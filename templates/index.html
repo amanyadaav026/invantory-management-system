@@ -159,14 +159,22 @@
                         </div>
                     {% endif %}
                 </section>
-                
+
                 <section class="products-section" id="products">
                     <div class="section-heading">
                         <div>
                             <h2><span class="heading-icon">◇</span> Products</h2>
                             <p>View, search and manage your inventory.</p>
                         </div>
-                        <a href="#add-product" class="primary-button">＋ Add Product</a>
+
+                        <div class="section-actions">
+                            <a href="{{ url_for('export_inventory') }}" class="secondary-button">
+                                ↓ Export CSV
+                            </a>
+                            <a href="#add-product" class="primary-button">
+                                ＋ Add Product
+                            </a>
+                        </div>
                     </div>
 
                     <div class="filter-toolbar">
