@@ -161,7 +161,11 @@
                                 {% for product in products %}
                                 <tr class="{% if product.quantity == 0 %}out-of-stock{% elif product.quantity <= 5 %}low-stock{% endif %}">
                                     <td>{{ product.id }}</td>
-                                    <td class="product-name-cell">{{ product.name }}</td>
+                                    <td class="product-name-cell">
+                                        <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-details-link">
+                                            {{ product.name }}
+                                        </a>
+                                    </td>
                                     <td>{{ product.category }}</td>
                                     <td>{{ product.quantity }}</td>
                                     <td>₹{{ "%.2f"|format(product.price) }}</td>

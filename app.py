@@ -290,6 +290,39 @@ def stock_history():
     return render_template("stock_history.html", movements=movements)
 
 
+@app.route("/product/<int:product_id>")
+def product_details(product_id):
+    conn = sqlite3.connect("inventory.db")
+    conn.row_factory = sqlite3.Row
+
+    product = conn.execute(
+        "SELECT * FROM products WHERE id = ?",
+        (product_id,)
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("home"))
+
+    movements = conn.execute("""
+        SELECT action, quantity_change, previous_quantity,
+               new_quantity, created_at
+        FROM stock_movements
+        WHERE product_id = ?
+        ORDER BY id DESC
+    """, (product_id,)).fetchall()
+
+    inventory_value = product["quantity"] * product["price"]
+
+    conn.close()
+
+    return render_template(
+        "product_details.html",
+        product=product,
+        movements=movements,
+        inventory_value=inventory_value
+    )
+
 if __name__ == "__main__":
     app.run(debug=True)
-    

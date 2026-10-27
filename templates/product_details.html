@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ product["name"] }} | StockTrack</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/product_details.css') }}"
+    >
+</head>
+<body>
+    <main class="details-page">
+
+        <header class="details-header">
+            <div>
+                <div class="details-eyebrow">StockTrack / Products</div>
+                <h1>Product Details</h1>
+                <p>View product information and stock activity.</p>
+            </div>
+
+            <a class="back-button" href="{{ url_for('home') }}">
+                <span aria-hidden="true">←</span>
+                Back to Dashboard
+            </a>
+        </header>
+
+        <section class="product-overview">
+            <div class="product-heading">
+                <div class="product-avatar" aria-hidden="true">
+                    {{ product["name"][0]|upper }}
+                </div>
+
+                <div class="product-title">
+                    <span class="product-label">PRODUCT #{{ product["id"] }}</span>
+                    <h2>{{ product["name"] }}</h2>
+                    <span class="category-badge">
+                        {{ product["category"] }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="product-stock">
+                <span class="info-label">Current Stock</span>
+                <strong>{{ product["quantity"] }}</strong>
+                <span class="stock-unit">units available</span>
+            </div>
+        </section>
+
+        <section class="details-grid">
+
+            <article class="detail-card">
+                <span class="info-label">Unit Price</span>
+                <strong>₹{{ "%.2f"|format(product["price"]) }}</strong>
+                <span class="detail-note">Price per unit</span>
+            </article>
+
+            <article class="detail-card">
+                <span class="info-label">Inventory Value</span>
+                <strong>₹{{ "%.2f"|format(inventory_value) }}</strong>
+                <span class="detail-note">Current stock × unit price</span>
+            </article>
+
+            <article class="detail-card">
+                <span class="info-label">Stock Status</span>
+
+                {% if product["quantity"] == 0 %}
+                    <span class="status-badge status-out">Out of Stock</span>
+                    <span class="detail-note">Restocking required</span>
+                {% elif product["quantity"] <= 5 %}
+                    <span class="status-badge status-low">Low Stock</span>
+                    <span class="detail-note">Stock is running low</span>
+                {% else %}
+                    <span class="status-badge status-available">In Stock</span>
+                    <span class="detail-note">Stock level is healthy</span>
+                {% endif %}
+            </article>
+
+        </section>
+
+        <section class="activity-card">
+            <div class="activity-header">
+                <div>
+                    <h2>Stock Movement History</h2>
+                    <p>Recorded quantity changes for this product.</p>
+                </div>
+
+                <span class="activity-count">
+                    {{ movements|length }} records
+                </span>
+            </div>
+
+            {% if movements %}
+                <div class="activity-table-wrap">
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th>Movement</th>
+                                <th>Changed</th>
+                                <th>Previous Qty</th>
+                                <th>New Qty</th>
+                                <th>Date &amp; Time</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for movement in movements %}
+                                <tr>
+                                    <td>
+                                        {% if movement["action"] == "Stock In" %}
+                                            <span class="movement-badge movement-in">
+                                                Stock In
+                                            </span>
+                                        {% elif movement["action"] == "Stock Out" %}
+                                            <span class="movement-badge movement-out">
+                                                Stock Out
+                                            </span>
+                                        {% else %}
+                                            <span class="movement-badge movement-edit">
+                                                Edit
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if movement["action"] == "Stock In" %}
+                                            <span class="quantity-in">+</span>
+                                        {% elif movement["action"] == "Stock Out" %}
+                                            <span class="quantity-out">−</span>
+                                        {% endif %}
+                                        {{ movement["quantity_change"] }}
+                                    </td>
+
+                                    <td>{{ movement["previous_quantity"] }}</td>
+                                    <td>{{ movement["new_quantity"] }}</td>
+                                    <td class="activity-date">
+                                        {{ movement["created_at"] }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="activity-empty">
+                    <h3>No stock activity yet</h3>
+                    <p>Stock movements for this product will appear here.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <footer class="details-footer">
+            StockTrack · Inventory Management
+        </footer>
+
+    </main>
+</body>
+</html>
