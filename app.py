@@ -46,6 +46,16 @@ def home():
         "SELECT * FROM products ORDER BY id DESC"
     ).fetchall()
 
+    low_stock_products = [
+        product for product in products
+        if 0 < product["quantity"] <= 5
+    ]
+
+    out_of_stock_products = [
+        product for product in products
+        if product["quantity"] == 0
+    ]
+
     total_products = len(products)
     low_stock = sum(1 for product in products if 0 < product["quantity"] <= 5)
     out_of_stock = sum(1 for product in products if product["quantity"] == 0)
@@ -62,7 +72,9 @@ def home():
         total_products=total_products,
         low_stock=low_stock,
         out_of_stock=out_of_stock,
-        total_inventory_value=total_inventory_value
+        total_inventory_value=total_inventory_value,
+        low_stock_products=low_stock_products,
+        out_of_stock_products=out_of_stock_products
     )
 
 

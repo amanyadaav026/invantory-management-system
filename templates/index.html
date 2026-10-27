@@ -106,7 +106,60 @@
                         </div>
                     </div>
                 </section>
-
+                
+                <section class="stock-alerts-section" id="stock-alerts">
+                    <div class="section-heading">
+                        <div>
+                            <h2>⚠ Stock Alerts</h2>
+                            <p>Products that need your attention.</p>
+                        </div>
+                        <span class="alert-count">
+                            {{ low_stock_products|length + out_of_stock_products|length }} Alerts
+                        </span>
+                    </div>
+                    
+                    {% if low_stock_products or out_of_stock_products %}
+                        <div class="stock-alerts-list">
+                            
+                            {% for product in out_of_stock_products %}
+                                <div class="stock-alert-item alert-out">
+                                    <div class="alert-icon">!</div>
+                                    <div class="alert-details">
+                                        <strong>{{ product.name }}</strong>
+                                        <span>{{ product.category }} · Product #{{ product.id }}</span>
+                                        <p>Out of stock — restock this product.</p>
+                                    </div>
+                                    <span class="alert-quantity">0 left</span>
+                                    <a href="{{ url_for('product_details', product_id=product.id) }}"
+                                       class="alert-view-link">View</a>
+                                </div>
+                            {% endfor %}
+                            
+                            {% for product in low_stock_products %}
+                                <div class="stock-alert-item alert-low">
+                                    <div class="alert-icon">!</div>
+                                    <div class="alert-details">
+                                        <strong>{{ product.name }}</strong>
+                                        <span>{{ product.category }} · Product #{{ product.id }}</span>
+                                        <p>Low stock — consider restocking soon.</p>
+                                    </div>
+                                    <span class="alert-quantity">{{ product.quantity }} left</span>
+                                    <a href="{{ url_for('product_details', product_id=product.id) }}"
+                                       class="alert-view-link">View</a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="stock-alerts-empty">
+                            <span>✓</span>
+                            <div>
+                                <strong>All products are well stocked!</strong>
+                                <p>No low-stock or out-of-stock products need attention.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </section>
+                
                 <section class="products-section" id="products">
                     <div class="section-heading">
                         <div>

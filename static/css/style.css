@@ -1481,3 +1481,234 @@ td.product-name-cell {
     background: #fff7ed;
 }
 
+
+/* ========================================
+   StockTrack — Low Stock Alerts
+======================================== */
+.stock-alerts-section {
+    margin: 28px 0 32px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e5eaf2;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+.stock-alerts-section .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stock-alerts-section .section-heading h2 {
+    margin: 0 0 6px;
+    color: #17233c;
+    font-size: 20px;
+    font-weight: 750;
+    letter-spacing: -0.4px;
+}
+
+.stock-alerts-section .section-heading p {
+    margin: 0;
+    color: #8490a5;
+    font-size: 13px;
+}
+
+.alert-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 8px 12px;
+    color: #b45309;
+    background: #fff4df;
+    border: 1px solid #fde5b3;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.stock-alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stock-alert-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 0;
+    padding: 16px 18px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stock-alert-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.06);
+}
+
+.stock-alert-item.alert-out {
+    background: #fff5f5;
+    border-color: #fee2e2;
+}
+
+.stock-alert-item.alert-low {
+    background: #fffaf0;
+    border-color: #fce8c3;
+}
+
+.alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.alert-out .alert-icon {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+.alert-low .alert-icon {
+    color: #d97706;
+    background: #ffedc2;
+}
+
+.alert-details {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.alert-details strong {
+    overflow-wrap: anywhere;
+    color: #202b40;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.alert-details > span {
+    color: #77839a;
+    font-size: 12px;
+}
+
+.alert-details p {
+    margin: 2px 0 0;
+    color: #667085;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.alert-quantity {
+    flex-shrink: 0;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+.alert-out .alert-quantity {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+
+.alert-low .alert-quantity {
+    color: #a16207;
+    background: #fef0c7;
+}
+
+.alert-view-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 9px 14px;
+    color: #2563eb;
+    background: #ffffff;
+    border: 1px solid #dbe5f5;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.alert-view-link:hover {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.stock-alerts-empty {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px;
+    background: #f0fdf4;
+    border: 1px solid #dcfce7;
+    border-radius: 13px;
+}
+
+.stock-alerts-empty > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    color: #15803d;
+    background: #dcfce7;
+    border-radius: 50%;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.stock-alerts-empty strong {
+    color: #166534;
+    font-size: 14px;
+}
+
+.stock-alerts-empty p {
+    margin: 5px 0 0;
+    color: #4b7560;
+    font-size: 12px;
+}
+
+@media (max-width: 640px) {
+    .stock-alerts-section {
+        margin: 20px 0;
+        padding: 16px;
+        border-radius: 14px;
+    }
+    
+    .stock-alert-item {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .alert-details {
+        flex-basis: calc(100% - 55px);
+    }
+
+    .alert-quantity {
+        margin-left: 48px;
+    }
+
+    .alert-view-link {
+        margin-left: auto;
+    }
+}
