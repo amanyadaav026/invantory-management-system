@@ -173,6 +173,22 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons">
+                                            <form action="{{ url_for('update_stock', product_id=product.id) }}" method="POST" class="stock-action-form">
+                                                <input
+                                                    type="number"
+                                                    name="quantity_change"
+                                                    min="1"
+                                                    step="1"
+                                                    placeholder="Qty"
+                                                    aria-label="Stock quantity change"
+                                                    required
+                                                >
+                                                
+                                                <button type="submit" name="action" value="in" class="stock-text-button stock-in-button">+ Stock In</button>
+
+
+                                                <button type="submit" name="action" value="out" class="stock-text-button stock-out-button">− Stock Out</button>
+                                            </form>
                                             <details class="edit-details">
                                                 <summary class="action-button edit-button" title="Edit product">✎</summary>
                                                 <form class="inline-edit-form" action="{{ url_for('edit_product', product_id=product.id) }}" method="POST">

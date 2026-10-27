@@ -1356,3 +1356,128 @@ td.product-name-cell {
 .overview-note {
     padding-top: 24px;
 }
+
+@media (max-width: 600px) {
+    .sidebar {
+        display: none;
+    }
+
+    .app-layout {
+        display: block;
+    }
+
+    .main-area {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-main {
+        padding: 16px 12px;
+    }
+
+    .page-heading {
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .dashboard {
+        gap: 12px;
+    }
+
+    .products-section,
+    .add-product-card,
+    .stock-overview {
+        padding: 16px;
+    }
+
+    input,
+    select,
+    textarea {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    button {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 600px) {
+    .app-footer {
+        padding: 16px 12px;
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+}
+
+
+/* StockTrack - Compact Stock Actions */
+.stock-action-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.stock-action-form input[type="number"] {
+    width: 72px;
+    min-width: 0;
+    padding: 8px 6px;
+    border: 1px solid #dbe3f0;
+    border-radius: 8px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.stock-action-form .action-button {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    line-height: 1;
+}
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-buttons > form:not(.stock-action-form) {
+    margin: 0;
+}
+
+
+.stock-text-button {
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid #dbe3f0;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.stock-in-button {
+    color: #15803d;
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.stock-out-button {
+    color: #c2410c;
+    border-color: #fed7aa;
+    background: #fff7ed;
+}
+

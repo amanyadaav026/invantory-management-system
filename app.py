@@ -163,6 +163,58 @@ def edit_product(product_id):
     flash("Product updated successfully!", "success")
     return redirect(url_for("home"))
 
+@app.route("/update-stock/<int:product_id>", methods=["POST"])
+def update_stock(product_id):
+    try:
+        quantity_change = int(request.form["quantity_change"])
+    except (ValueError, KeyError):
+        flash("Please enter a valid whole number.", "error")
+        return redirect(url_for("home"))
+
+    if quantity_change <= 0:
+        flash("Quantity must be greater than zero.", "error")
+        return redirect(url_for("home"))
+
+    action = request.form.get("action")
+
+    if action not in ("in", "out"):
+        flash("Invalid stock action.", "error")
+        return redirect(url_for("home"))
+
+    conn = sqlite3.connect("inventory.db")
+
+    product = conn.execute(
+        "SELECT quantity FROM products WHERE id = ?",
+        (product_id,)
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("home"))
+
+    current_quantity = product[0]
+
+    if action == "out" and quantity_change > current_quantity:
+        conn.close()
+        flash("Stock out quantity cannot exceed available stock.", "error")
+        return redirect(url_for("home"))
+
+    if action == "in":
+        new_quantity = current_quantity + quantity_change
+    else:
+        new_quantity = current_quantity - quantity_change
+
+    conn.execute(
+        "UPDATE products SET quantity = ? WHERE id = ?",
+        (new_quantity, product_id)
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Stock updated successfully!", "success")
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
     app.run(debug=True)
