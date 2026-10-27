@@ -18,6 +18,19 @@ def init_db():
         )
     """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS stock_movements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            product_name TEXT NOT NULL,
+            action TEXT NOT NULL,
+            quantity_change INTEGER NOT NULL,
+            previous_quantity INTEGER NOT NULL,
+            new_quantity INTEGER NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -119,49 +132,77 @@ def delete_product(product_id):
 
 @app.route("/edit-product/<int:product_id>", methods=["POST"])
 def edit_product(product_id):
-    name = request.form["name"]
-    category = request.form["category"]
-    
+    name = request.form["name"].strip()
+    category = request.form["category"].strip()
+
     if not name or not category:
         flash("Product name and category cannot be empty.", "error")
         return redirect(url_for("home"))
-    
+
     try:
         quantity = int(request.form["quantity"])
         price = float(request.form["price"])
     except ValueError:
         flash("Quantity must be a whole number and price must be a valid number.", "error")
         return redirect(url_for("home"))
-    
+
     if quantity < 0 or price < 0:
         flash("Quantity and price cannot be negative.", "error")
         return redirect(url_for("home"))
 
     conn = sqlite3.connect("inventory.db")
-    existing_product = conn.execute(
-        """SELECT id FROM products
-           WHERE LOWER(name) = LOWER(?)
-           AND LOWER(category) = LOWER(?)
-           AND id != ?""",
-        (name, category, product_id)
-    ).fetchone()
-    
+
+    existing_product = conn.execute("""
+        SELECT id FROM products
+        WHERE LOWER(name) = LOWER(?)
+        AND LOWER(category) = LOWER(?)
+        AND id != ?
+    """, (name, category, product_id)).fetchone()
+
     if existing_product:
         conn.close()
         flash("Duplicate product! This product already exists in this category.", "error")
         return redirect(url_for("home"))
 
-    conn.execute(
-        """UPDATE products
-           SET name = ?, category = ?, quantity = ?, price = ?
-           WHERE id = ?""",
-        (name, category, quantity, price, product_id)
-    )
+    old_product = conn.execute(
+        "SELECT name, quantity FROM products WHERE id = ?",
+        (product_id,)
+    ).fetchone()
+
+    if old_product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("home"))
+
+    old_name, previous_quantity = old_product
+
+    conn.execute("""
+        UPDATE products
+        SET name = ?, category = ?, quantity = ?, price = ?
+        WHERE id = ?
+    """, (name, category, quantity, price, product_id))
+
+    if quantity != previous_quantity:
+        conn.execute("""
+            INSERT INTO stock_movements
+            (product_id, product_name, action, quantity_change,
+             previous_quantity, new_quantity)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            product_id,
+            name,
+            "Edit",
+            abs(quantity - previous_quantity),
+            previous_quantity,
+            quantity
+        ))
 
     conn.commit()
     conn.close()
+
     flash("Product updated successfully!", "success")
     return redirect(url_for("home"))
+
 
 @app.route("/update-stock/<int:product_id>", methods=["POST"])
 def update_stock(product_id):
@@ -176,7 +217,6 @@ def update_stock(product_id):
         return redirect(url_for("home"))
 
     action = request.form.get("action")
-
     if action not in ("in", "out"):
         flash("Invalid stock action.", "error")
         return redirect(url_for("home"))
@@ -184,7 +224,7 @@ def update_stock(product_id):
     conn = sqlite3.connect("inventory.db")
 
     product = conn.execute(
-        "SELECT quantity FROM products WHERE id = ?",
+        "SELECT name, quantity FROM products WHERE id = ?",
         (product_id,)
     ).fetchone()
 
@@ -193,7 +233,7 @@ def update_stock(product_id):
         flash("Product not found.", "error")
         return redirect(url_for("home"))
 
-    current_quantity = product[0]
+    product_name, current_quantity = product
 
     if action == "out" and quantity_change > current_quantity:
         conn.close()
@@ -202,13 +242,29 @@ def update_stock(product_id):
 
     if action == "in":
         new_quantity = current_quantity + quantity_change
+        movement_action = "Stock In"
     else:
         new_quantity = current_quantity - quantity_change
+        movement_action = "Stock Out"
 
     conn.execute(
         "UPDATE products SET quantity = ? WHERE id = ?",
         (new_quantity, product_id)
     )
+
+    conn.execute("""
+        INSERT INTO stock_movements
+        (product_id, product_name, action, quantity_change,
+         previous_quantity, new_quantity)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        product_id,
+        product_name,
+        movement_action,
+        quantity_change,
+        current_quantity,
+        new_quantity
+    ))
 
     conn.commit()
     conn.close()
@@ -216,6 +272,24 @@ def update_stock(product_id):
     flash("Stock updated successfully!", "success")
     return redirect(url_for("home"))
 
+
+@app.route("/stock-history")
+def stock_history():
+    conn = sqlite3.connect("inventory.db")
+    conn.row_factory = sqlite3.Row
+
+    movements = conn.execute("""
+        SELECT product_id, product_name, action, quantity_change,
+               previous_quantity, new_quantity, created_at
+        FROM stock_movements
+        ORDER BY id DESC
+    """).fetchall()
+
+    conn.close()
+
+    return render_template("stock_history.html", movements=movements)
+
+
 if __name__ == "__main__":
     app.run(debug=True)
-
+    

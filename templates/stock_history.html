@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Stock History | StockTrack</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/stock_history.css') }}"
+    >
+</head>
+<body>
+    <main class="history-page">
+
+        <header class="history-header">
+            <div class="history-heading">
+                <div class="history-eyebrow">StockTrack / Inventory</div>
+                <h1>Stock Movement History</h1>
+                <p>Keep track of every recorded change in your inventory.</p>
+            </div>
+
+            <a class="history-back" href="{{ url_for('home') }}">
+                <span aria-hidden="true">←</span>
+                Back to Dashboard
+            </a>
+        </header>
+
+        <section class="history-summary" aria-label="Stock movement summary">
+
+            <article class="history-stat">
+                <div class="history-stat-top">
+                    <span class="history-stat-label">Total Movements</span>
+                    <span class="stat-icon total-icon" aria-hidden="true">↔</span>
+                </div>
+
+                <strong class="history-stat-value">
+                    {{ movements|length }}
+                </strong>
+
+                <span class="history-stat-note">
+                    Recorded stock transactions
+                </span>
+            </article>
+
+            <article class="history-stat">
+                <div class="history-stat-top">
+                    <span class="history-stat-label">Stock In</span>
+                    <span class="stat-icon in-icon" aria-hidden="true">↗</span>
+                </div>
+
+                <strong class="history-stat-value">
+                    {{ movements|selectattr("action", "equalto", "Stock In")|list|length }}
+                </strong>
+
+                <span class="history-stat-note">
+                    Incoming stock records
+                </span>
+            </article>
+
+            <article class="history-stat">
+                <div class="history-stat-top">
+                    <span class="history-stat-label">Stock Out</span>
+                    <span class="stat-icon out-icon" aria-hidden="true">↘</span>
+                </div>
+
+                <strong class="history-stat-value">
+                    {{ movements|selectattr("action", "equalto", "Stock Out")|list|length }}
+                </strong>
+
+                <span class="history-stat-note">
+                    Outgoing stock records
+                </span>
+            </article>
+
+        </section>
+
+        <section class="history-card">
+
+            <div class="history-card-header">
+                <div>
+                    <h2>Recent Transactions</h2>
+                    <p>Review previous and updated quantities for each movement.</p>
+                </div>
+
+                <span class="history-count">
+                    {{ movements|length }} records
+                </span>
+            </div>
+
+            {% if movements %}
+                <div class="history-table-wrap">
+                    <table class="history-table">
+
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Movement Type</th>
+                                <th>Changed</th>
+                                <th>Previous Qty</th>
+                                <th>New Qty</th>
+                                <th>Date &amp; Time</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for movement in movements %}
+                                <tr>
+                                    <td>
+                                        <span class="history-product">
+                                            {{ movement["product_name"] }}
+                                        </span>
+
+                                        <span class="history-id">
+                                            Product ID: {{ movement["product_id"] }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {% if movement["action"] == "Stock In" %}
+                                            <span class="movement-badge movement-in">
+                                                ↗ Stock In
+                                            </span>
+                                        {% elif movement["action"] == "Stock Out" %}
+                                            <span class="movement-badge movement-out">
+                                                ↘ Stock Out
+                                            </span>
+                                        {% else %}
+                                            <span class="movement-badge movement-edit">
+                                                ✎ Edit
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <span class="quantity-change {% if movement['action'] == 'Stock In' %}quantity-in{% elif movement['action'] == 'Stock Out' %}quantity-out{% endif %}">
+                                            {% if movement["action"] == "Stock In" %}
+                                                +
+                                            {% elif movement["action"] == "Stock Out" %}
+                                                −
+                                            {% endif %}{{ movement["quantity_change"] }}
+                                        </span>
+                                    </td>
+
+                                    <td class="quantity-cell">
+                                        {{ movement["previous_quantity"] }}
+                                    </td>
+
+                                    <td class="quantity-cell">
+                                        {{ movement["new_quantity"] }}
+                                    </td>
+
+                                    <td class="history-date">
+                                        {{ movement["created_at"] }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            {% else %}
+                <div class="history-empty">
+                    <div class="history-empty-icon" aria-hidden="true">↔</div>
+
+                    <h3>No stock movements yet</h3>
+
+                    <p>
+                        Stock In, Stock Out, or quantity edits will appear here.
+                    </p>
+
+                    <a class="history-back" href="{{ url_for('home') }}">
+                        Go to Dashboard
+                    </a>
+                </div>
+            {% endif %}
+
+        </section>
+
+        <footer class="history-footer">
+            StockTrack · Inventory Activity
+        </footer>
+
+    </main>
+</body>
+</html>
