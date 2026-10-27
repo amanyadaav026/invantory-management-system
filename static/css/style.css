@@ -1749,3 +1749,171 @@ td.product-name-cell {
         justify-content: flex-start;
     }
 }
+
+
+/* ========================================
+   Inventory Analytics Dashboard
+======================================== */
+.analytics-section {
+    margin-top: 24px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+}
+
+.analytics-section .section-heading {
+    margin-bottom: 22px;
+}
+
+.analytics-section .section-heading h2 {
+    margin: 0 0 6px;
+    color: #0f172a;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.analytics-section .section-heading p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.analytics-card {
+    min-width: 0;
+    padding: 20px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.analytics-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.analytics-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.analytics-category-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    color: #2563eb;
+    background: #dbeafe;
+    border-radius: 10px;
+    font-size: 22px;
+}
+
+.analytics-product-count {
+    padding: 5px 9px;
+    color: #475569;
+    background: #e2e8f0;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.analytics-card h3 {
+    margin: 0 0 12px;
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.analytics-value {
+    color: #0f172a;
+    font-size: 24px;
+    font-weight: 750;
+    letter-spacing: -0.5px;
+    overflow-wrap: anywhere;
+}
+
+.analytics-value-label {
+    margin: 4px 0 18px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.analytics-bar-track {
+    width: 100%;
+    height: 7px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+.analytics-bar-fill {
+    height: 100%;
+    min-width: 0;
+    background: #2563eb;
+    border-radius: 10px;
+    transition: width 0.4s ease;
+}
+
+.analytics-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.analytics-card-footer strong {
+    color: #334155;
+    font-size: 12px;
+}
+
+.analytics-empty {
+    padding: 32px 20px;
+    text-align: center;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+}
+
+.analytics-empty strong {
+    color: #334155;
+    font-size: 15px;
+}
+
+.analytics-empty p {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .analytics-section {
+        padding: 16px;
+    }
+
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-value {
+        font-size: 22px;
+    }
+}

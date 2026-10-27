@@ -159,6 +159,62 @@
                         </div>
                     {% endif %}
                 </section>
+                
+                <section class="analytics-section" id="analytics">
+                    <div class="section-heading">
+                        <div>
+                            <h2>📊 Inventory Analytics</h2>
+                            <p>Understand your inventory category by category.</p>
+                        </div>
+                    </div>
+                    
+                    {% if category_analytics %}
+                        {% set max_value = namespace(amount=0) %}
+                        {% for category in category_analytics %}
+                            {% if category.inventory_value > max_value.amount %}
+                                {% set max_value.amount = category.inventory_value %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <div class="analytics-grid">
+                            {% for category in category_analytics %}
+                                {% set bar_width = (category.inventory_value / max_value.amount * 100) if max_value.amount > 0 else 0 %}
+                                
+                                <div class="analytics-card">
+                                    <div class="analytics-card-top">
+                                        <div class="analytics-category-icon">▦</div>
+                                        <span class="analytics-product-count">
+                                            {{ category.product_count }}
+                                            {{ 'product' if category.product_count == 1 else 'products' }}
+                                        </span>
+                                    </div>
+                                    
+                                    <h3>{{ category.category }}</h3>
+                                    
+                                    <div class="analytics-value">
+                                        ₹{{ "%.2f"|format(category.inventory_value or 0) }}
+                                    </div>
+                                    <p class="analytics-value-label">Inventory value</p>
+                                    
+                                    <div class="analytics-bar-track">
+                                        <div class="analytics-bar-fill"style="width: {{ bar_width }}%"></div>
+                                    </div>
+                                    
+                                    <div class="analytics-card-footer">
+                                        <span>Total quantity</span>
+                                        <strong>{{ category.total_quantity or 0 }} units</strong>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="analytics-empty">
+                            <strong>No analytics available yet</strong>
+                            <p>Add products to see category-wise inventory insights.</p>
+                        </div>
+                    {% endif %}
+                </section>
+
 
                 <section class="products-section" id="products">
                     <div class="section-heading">

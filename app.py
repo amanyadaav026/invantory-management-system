@@ -59,13 +59,32 @@ def home():
     ]
 
     total_products = len(products)
-    low_stock = sum(1 for product in products if 0 < product["quantity"] <= 5)
-    out_of_stock = sum(1 for product in products if product["quantity"] == 0)
+    low_stock = sum(
+        1 for product in products
+        if 0 < product["quantity"] <= 5
+    )
+    out_of_stock = sum(
+        1 for product in products
+        if product["quantity"] == 0
+    )
+
     total_inventory_value = sum(
         product["quantity"] * product["price"]
         for product in products
     )
 
+    # Category-wise inventory analytics
+    category_analytics = conn.execute("""
+        SELECT
+            category,
+            COUNT(*) AS product_count,
+            SUM(quantity) AS total_quantity,
+            SUM(quantity * price) AS inventory_value
+        FROM products
+        GROUP BY category
+        ORDER BY inventory_value DESC
+    """).fetchall()
+    
     conn.close()
 
     return render_template(
@@ -76,7 +95,8 @@ def home():
         out_of_stock=out_of_stock,
         total_inventory_value=total_inventory_value,
         low_stock_products=low_stock_products,
-        out_of_stock_products=out_of_stock_products
+        out_of_stock_products=out_of_stock_products,
+        category_analytics=category_analytics
     )
 
 @app.route("/export-inventory")
