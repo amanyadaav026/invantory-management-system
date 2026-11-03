@@ -263,15 +263,27 @@
                             <h2><span class="heading-icon">◇</span> Products</h2>
                             <p>View, search and manage your inventory.</p>
                         </div>
-
+                        
                         <div class="section-actions">
                             <a href="{{ url_for('export_inventory') }}" class="secondary-button">
                                 ↓ Export CSV
                             </a>
+                            
+                            <form action="{{ url_for('import_inventory') }}" method="POST" enctype="multipart/form-data" class="import-form">
+                                <label for="csv-file" class="secondary-button">
+                                    ↑ Import CSV
+                                </label>
+                                <input type="file" id="csv-file" name="file" accept=".csv" required hidden>
+                                <button type="submit" class="secondary-button">
+                                    Upload
+                                </button>
+                            </form>
+                            
                             <a href="#add-product" class="primary-button">
                                 ＋ Add Product
                             </a>
                         </div>
+
                     </div>
 
                     <div class="filter-toolbar">

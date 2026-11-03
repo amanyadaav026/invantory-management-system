@@ -143,6 +143,109 @@ def export_inventory():
         }
     )
 
+@app.route("/import-inventory", methods=["POST"])
+def import_inventory():
+    if "file" not in request.files:
+        flash("Please select a CSV file.")
+        return redirect(url_for("home"))
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        flash("No file selected.")
+        return redirect(url_for("home"))
+
+    if not file.filename.lower().endswith(".csv"):
+        flash("Please upload a valid CSV file.")
+        return redirect(url_for("home"))
+
+    try:
+        csv_content = file.read().decode("utf-8-sig")
+
+        if not csv_content.strip():
+            flash("The CSV file is empty.")
+            return redirect(url_for("home"))
+
+        reader = csv.DictReader(io.StringIO(csv_content))
+
+        required_columns = {
+            "Product Name",
+            "Category",
+            "Quantity",
+            "Unit Price (INR)"
+        }
+
+        if not reader.fieldnames:
+            flash("Invalid CSV file: headers are missing.")
+            return redirect(url_for("home"))
+
+        reader.fieldnames = [header.strip() for header in reader.fieldnames]
+
+        if not required_columns.issubset(set(reader.fieldnames)):
+            flash("Invalid CSV format. Please use a StockTrack inventory CSV.")
+            return redirect(url_for("home"))
+
+        conn = sqlite3.connect("inventory.db")
+
+        imported = 0
+        duplicates = 0
+        invalid = 0
+
+        for row in reader:
+            name = (row.get("Product Name") or "").strip()
+            category = (row.get("Category") or "").strip()
+
+            try:
+                quantity = int(row.get("Quantity", ""))
+                price = float(row.get("Unit Price (INR)", ""))
+
+                if not name or not category or quantity < 0 or not (price >= 0):
+                    invalid += 1
+                    continue
+
+            except (ValueError, TypeError):
+                invalid += 1
+                continue
+
+            existing_product = conn.execute(
+                """
+                SELECT id FROM products
+                WHERE LOWER(name) = LOWER(?)
+                AND LOWER(category) = LOWER(?)
+                """,
+                (name, category)
+            ).fetchone()
+
+            if existing_product:
+                duplicates += 1
+                continue
+
+            conn.execute(
+                """
+                INSERT INTO products (name, category, quantity, price)
+                VALUES (?, ?, ?, ?)
+                """,
+                (name, category, quantity, price)
+            )
+
+            imported += 1
+
+        conn.commit()
+        conn.close()
+
+        flash(
+            f"CSV import complete! Imported: {imported}, "
+            f"Duplicates skipped: {duplicates}, Invalid rows skipped: {invalid}."
+        )
+
+    except UnicodeDecodeError:
+        flash("Unable to read this file. Please upload a UTF-8 CSV file.")
+
+    except csv.Error:
+        flash("There was an error reading the CSV file.")
+
+    return redirect(url_for("home"))
+
 @app.route("/add-product", methods=["POST"])
 def add_product():
     name = request.form["name"].strip()
