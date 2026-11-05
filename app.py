@@ -1,11 +1,17 @@
-
 from flask import Flask, render_template, request, redirect, url_for, flash, Response
+from dotenv import load_dotenv
 import sqlite3
 import csv
 import io
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "inventory-dev-secret-key"
+app.secret_key = os.getenv("SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY is missing. Please configure it in the .env file.")
 
 def init_db():
     conn = sqlite3.connect("inventory.db")
