@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, Response, g
 from dotenv import load_dotenv
 import sqlite3
 import csv
@@ -13,8 +13,23 @@ app.secret_key = os.getenv("SECRET_KEY")
 if not app.secret_key:
     raise RuntimeError("SECRET_KEY is missing. Please configure it in the .env file.")
 
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect("inventory.db")
+        g.db.row_factory = sqlite3.Row
+
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(error=None):
+    db = g.pop("db", None)
+
+    if db is not None:
+        db.close()
+
 def init_db():
-    conn = sqlite3.connect("inventory.db")
+    conn = get_db()
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS products (
@@ -40,15 +55,14 @@ def init_db():
     """)
 
     conn.commit()
-    conn.close()
 
-init_db()
+with app.app_context():
+    init_db()
 
 
 @app.route("/")
 def home():
-    conn = sqlite3.connect("inventory.db")
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
 
     products = conn.execute(
         "SELECT * FROM products ORDER BY id DESC"
@@ -90,8 +104,6 @@ def home():
         GROUP BY category
         ORDER BY inventory_value DESC
     """).fetchall()
-    
-    conn.close()
 
     return render_template(
         "index.html",
@@ -107,14 +119,11 @@ def home():
 
 @app.route("/export-inventory")
 def export_inventory():
-    conn = sqlite3.connect("inventory.db")
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
 
     products = conn.execute(
         "SELECT id, name, category, quantity, price FROM products ORDER BY id ASC"
     ).fetchall()
-
-    conn.close()
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -191,7 +200,7 @@ def import_inventory():
             flash("Invalid CSV format. Please use a StockTrack inventory CSV.")
             return redirect(url_for("home"))
 
-        conn = sqlite3.connect("inventory.db")
+        conn = get_db()
 
         imported = 0
         duplicates = 0
@@ -237,8 +246,6 @@ def import_inventory():
             imported += 1
 
         conn.commit()
-        conn.close()
-
         flash(
             f"CSV import complete! Imported: {imported}, "
             f"Duplicates skipped: {duplicates}, Invalid rows skipped: {invalid}."
@@ -272,7 +279,7 @@ def add_product():
         return redirect(url_for("home"))
 
 
-    conn = sqlite3.connect("inventory.db")
+    conn = get_db()
 
     existing_product = conn.execute(
         """SELECT id FROM products
@@ -282,7 +289,6 @@ def add_product():
     ).fetchone()
 
     if existing_product:
-        conn.close()
         flash("Duplicate product! This product already exists in this category.", "error")
         return redirect(url_for("home"))
 
@@ -293,16 +299,13 @@ def add_product():
     )
 
     conn.commit()
-    conn.close()
     flash("Product added successfully!", "success")
     return redirect(url_for("home"))
 
 
-
-
 @app.route("/delete-product/<int:product_id>", methods=["POST"])
 def delete_product(product_id):
-    conn = sqlite3.connect("inventory.db")
+    conn = get_db()
 
     conn.execute(
         "DELETE FROM products WHERE id = ?",
@@ -310,7 +313,6 @@ def delete_product(product_id):
     )
 
     conn.commit()
-    conn.close()
     flash("Product deleted successfully!", "success")
     return redirect(url_for("home"))
 
@@ -335,7 +337,7 @@ def edit_product(product_id):
         flash("Quantity and price cannot be negative.", "error")
         return redirect(url_for("home"))
 
-    conn = sqlite3.connect("inventory.db")
+    conn = get_db()
 
     existing_product = conn.execute("""
         SELECT id FROM products
@@ -345,7 +347,6 @@ def edit_product(product_id):
     """, (name, category, product_id)).fetchone()
 
     if existing_product:
-        conn.close()
         flash("Duplicate product! This product already exists in this category.", "error")
         return redirect(url_for("home"))
 
@@ -355,7 +356,6 @@ def edit_product(product_id):
     ).fetchone()
 
     if old_product is None:
-        conn.close()
         flash("Product not found.", "error")
         return redirect(url_for("home"))
 
@@ -383,11 +383,8 @@ def edit_product(product_id):
         ))
 
     conn.commit()
-    conn.close()
-
     flash("Product updated successfully!", "success")
     return redirect(url_for("home"))
-
 
 @app.route("/update-stock/<int:product_id>", methods=["POST"])
 def update_stock(product_id):
@@ -406,7 +403,7 @@ def update_stock(product_id):
         flash("Invalid stock action.", "error")
         return redirect(url_for("home"))
 
-    conn = sqlite3.connect("inventory.db")
+    conn = get_db()
 
     product = conn.execute(
         "SELECT name, quantity FROM products WHERE id = ?",
@@ -414,14 +411,12 @@ def update_stock(product_id):
     ).fetchone()
 
     if product is None:
-        conn.close()
         flash("Product not found.", "error")
         return redirect(url_for("home"))
 
     product_name, current_quantity = product
 
     if action == "out" and quantity_change > current_quantity:
-        conn.close()
         flash("Stock out quantity cannot exceed available stock.", "error")
         return redirect(url_for("home"))
 
@@ -452,7 +447,6 @@ def update_stock(product_id):
     ))
 
     conn.commit()
-    conn.close()
 
     flash("Stock updated successfully!", "success")
     return redirect(url_for("home"))
@@ -460,8 +454,7 @@ def update_stock(product_id):
 
 @app.route("/stock-history")
 def stock_history():
-    conn = sqlite3.connect("inventory.db")
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
 
     movements = conn.execute("""
         SELECT product_id, product_name, action, quantity_change,
@@ -470,15 +463,13 @@ def stock_history():
         ORDER BY id DESC
     """).fetchall()
 
-    conn.close()
 
     return render_template("stock_history.html", movements=movements)
 
 
 @app.route("/product/<int:product_id>")
 def product_details(product_id):
-    conn = sqlite3.connect("inventory.db")
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
 
     product = conn.execute(
         "SELECT * FROM products WHERE id = ?",
@@ -486,7 +477,6 @@ def product_details(product_id):
     ).fetchone()
 
     if product is None:
-        conn.close()
         flash("Product not found.", "error")
         return redirect(url_for("home"))
 
@@ -499,8 +489,6 @@ def product_details(product_id):
     """, (product_id,)).fetchall()
 
     inventory_value = product["quantity"] * product["price"]
-
-    conn.close()
 
     return render_template(
         "product_details.html",
