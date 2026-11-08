@@ -4,8 +4,14 @@ import sqlite3
 import csv
 import io
 import os
+import logging
 
 load_dotenv()
+logging.basicConfig(
+    filename="stocktrack.log",
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
@@ -15,11 +21,16 @@ if not app.secret_key:
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect("inventory.db")
-        g.db.row_factory = sqlite3.Row
+        try:
+            db = sqlite3.connect("inventory.db")
+            db.row_factory = sqlite3.Row
+            g.db = db
+
+        except sqlite3.Error:
+            logging.exception("Database connection failed.")
+            raise
 
     return g.db
-
 
 @app.teardown_appcontext
 def close_db(error=None):
@@ -29,36 +40,40 @@ def close_db(error=None):
         db.close()
 
 def init_db():
-    conn = get_db()
+    try:
+        conn = get_db()
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            category TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
-            price REAL NOT NULL
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                quantity INTEGER NOT NULL,
+                price REAL NOT NULL
+            )
+        """)
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS stock_movements (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id INTEGER NOT NULL,
-            product_name TEXT NOT NULL,
-            action TEXT NOT NULL,
-            quantity_change INTEGER NOT NULL,
-            previous_quantity INTEGER NOT NULL,
-            new_quantity INTEGER NOT NULL,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS stock_movements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_id INTEGER NOT NULL,
+                product_name TEXT NOT NULL,
+                action TEXT NOT NULL,
+                quantity_change INTEGER NOT NULL,
+                previous_quantity INTEGER NOT NULL,
+                new_quantity INTEGER NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
-    conn.commit()
+        conn.commit()
+
+    except sqlite3.Error:
+        logging.exception("Database initialization failed.")
+        raise
 
 with app.app_context():
     init_db()
-
 
 @app.route("/")
 def home():
