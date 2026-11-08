@@ -420,52 +420,62 @@ def update_stock(product_id):
 
     conn = get_db()
 
-    product = conn.execute(
-        "SELECT name, quantity FROM products WHERE id = ?",
-        (product_id,)
-    ).fetchone()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
 
-    if product is None:
-        flash("Product not found.", "error")
+        product = conn.execute(
+            "SELECT name, quantity FROM products WHERE id = ?",
+            (product_id,)
+        ).fetchone()
+
+        if product is None:
+            conn.rollback()
+            flash("Product not found.", "error")
+            return redirect(url_for("home"))
+
+        product_name, current_quantity = product
+
+        if action == "out" and quantity_change > current_quantity:
+            conn.rollback()
+            flash("Stock out quantity cannot exceed available stock.", "error")
+            return redirect(url_for("home"))
+
+        if action == "in":
+            new_quantity = current_quantity + quantity_change
+            movement_action = "Stock In"
+        else:
+            new_quantity = current_quantity - quantity_change
+            movement_action = "Stock Out"
+
+        conn.execute(
+            "UPDATE products SET quantity = ? WHERE id = ?",
+            (new_quantity, product_id)
+        )
+
+        conn.execute("""
+            INSERT INTO stock_movements
+            (product_id, product_name, action, quantity_change,
+            previous_quantity, new_quantity)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            product_id,
+            product_name,
+            movement_action,
+            quantity_change,
+            current_quantity,
+            new_quantity
+        ))
+
+        conn.commit()
+
+    except sqlite3.Error:
+        conn.rollback()
+        logging.exception("Stock update failed.")
+        flash("Unable to update stock. Please try again.", "error")
         return redirect(url_for("home"))
-
-    product_name, current_quantity = product
-
-    if action == "out" and quantity_change > current_quantity:
-        flash("Stock out quantity cannot exceed available stock.", "error")
-        return redirect(url_for("home"))
-
-    if action == "in":
-        new_quantity = current_quantity + quantity_change
-        movement_action = "Stock In"
-    else:
-        new_quantity = current_quantity - quantity_change
-        movement_action = "Stock Out"
-
-    conn.execute(
-        "UPDATE products SET quantity = ? WHERE id = ?",
-        (new_quantity, product_id)
-    )
-
-    conn.execute("""
-        INSERT INTO stock_movements
-        (product_id, product_name, action, quantity_change,
-         previous_quantity, new_quantity)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        product_id,
-        product_name,
-        movement_action,
-        quantity_change,
-        current_quantity,
-        new_quantity
-    ))
-
-    conn.commit()
 
     flash("Stock updated successfully!", "success")
     return redirect(url_for("home"))
-
 
 @app.route("/stock-history")
 def stock_history():
@@ -478,9 +488,7 @@ def stock_history():
         ORDER BY id DESC
     """).fetchall()
 
-
     return render_template("stock_history.html", movements=movements)
-
 
 @app.route("/product/<int:product_id>")
 def product_details(product_id):
