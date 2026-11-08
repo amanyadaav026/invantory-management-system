@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 | Page Not Found - StockTrack</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/error.css') }}">
+</head>
+<body class="error-page">
+
+    <main class="error-container">
+        <div class="error-brand">
+            <span class="brand-icon">◆</span>
+            <span>StockTrack</span>
+        </div>
+
+        <section class="error-content">
+            <div class="error-code">404</div>
+
+            <h1>Page not found</h1>
+
+            <p>
+                Sorry, the page you're looking for doesn't exist
+                or may have been moved.
+            </p>
+
+            <a href="{{ url_for('home') }}" class="error-button">
+                Back to Dashboard
+            </a>
+        </section>
+
+        <footer class="error-footer">
+            StockTrack · Inventory Manager
+        </footer>
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+
+/* ========================================
+   StockTrack — Error Pages
+======================================== */
+
+.error-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--page-bg);
+}
+
+.error-container {
+    width: 100%;
+    max-width: 560px;
+    text-align: center;
+}
+
+.error-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 55px;
+    color: var(--navy);
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.error-brand .brand-icon {
+    color: var(--blue);
+    font-size: 25px;
+}
+
+.error-content {
+    padding: 45px 35px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(23, 37, 84, 0.05);
+}
+
+.error-code {
+    color: var(--blue);
+    font-size: clamp(76px, 15vw, 120px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -5px;
+}
+
+.error-content h1 {
+    margin: 22px 0 10px;
+    color: var(--heading);
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.error-content p {
+    max-width: 390px;
+    margin: 0 auto 28px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.error-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 22px;
+    background: var(--blue);
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.error-button:hover {
+    background: var(--blue-hover);
+}
+
+.error-footer {
+    margin-top: 30px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .error-content {
+        padding: 35px 20px;
+    }
+
+    .error-brand {
+        margin-bottom: 35px;
+    }
+
+    .error-content h1 {
+        font-size: 21px;
+    }
+}
