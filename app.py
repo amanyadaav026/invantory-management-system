@@ -24,6 +24,7 @@ def get_db():
         try:
             db = sqlite3.connect("inventory.db")
             db.row_factory = sqlite3.Row
+            db.execute("PRAGMA foreign_keys = ON")
             g.db = db
 
         except sqlite3.Error:
@@ -56,19 +57,78 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS stock_movements (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                product_id INTEGER NOT NULL,
+                product_id INTEGER,
+                original_product_id INTEGER NOT NULL,
                 product_name TEXT NOT NULL,
                 action TEXT NOT NULL,
                 quantity_change INTEGER NOT NULL,
                 previous_quantity INTEGER NOT NULL,
                 new_quantity INTEGER NOT NULL,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES products(id)
+                ON DELETE SET NULL
             )
         """)
+
+        columns = {
+            row["name"]
+            for row in conn.execute(
+                "PRAGMA table_info(stock_movements)"
+            ).fetchall()
+        }
+
+        if "original_product_id" not in columns:
+            conn.execute("BEGIN IMMEDIATE")
+
+            conn.execute("""
+                CREATE TABLE stock_movements_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    product_id INTEGER,
+                    original_product_id INTEGER NOT NULL,
+                    product_name TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    quantity_change INTEGER NOT NULL,
+                    previous_quantity INTEGER NOT NULL,
+                    new_quantity INTEGER NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (product_id) REFERENCES products(id)
+                    ON DELETE SET NULL
+                )
+            """)
+
+            conn.execute("""
+                INSERT INTO stock_movements_new (
+                    id, product_id, original_product_id, product_name,
+                    action, quantity_change, previous_quantity,
+                    new_quantity, created_at
+                )
+                SELECT
+                    sm.id,
+                    CASE WHEN p.id IS NOT NULL THEN sm.product_id ELSE NULL END,
+                    sm.product_id,
+                    sm.product_name,
+                    sm.action,
+                    sm.quantity_change,
+                    sm.previous_quantity,
+                    sm.new_quantity,
+                    sm.created_at
+                FROM stock_movements sm
+                LEFT JOIN products p ON p.id = sm.product_id
+            """)
+
+            conn.execute("DROP TABLE stock_movements")
+
+            conn.execute("""
+                ALTER TABLE stock_movements_new
+                RENAME TO stock_movements
+            """)
 
         conn.commit()
 
     except sqlite3.Error:
+        if "conn" in locals():
+            conn.rollback()
+
         logging.exception("Database initialization failed.")
         raise
 
@@ -385,10 +445,11 @@ def edit_product(product_id):
     if quantity != previous_quantity:
         conn.execute("""
             INSERT INTO stock_movements
-            (product_id, product_name, action, quantity_change,
-             previous_quantity, new_quantity)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (product_id, original_product_id, product_name, action,
+             quantity_change, previous_quantity, new_quantity)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
+            product_id,
             product_id,
             name,
             "Edit",
@@ -454,10 +515,11 @@ def update_stock(product_id):
 
         conn.execute("""
             INSERT INTO stock_movements
-            (product_id, product_name, action, quantity_change,
-            previous_quantity, new_quantity)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (product_id, original_product_id, product_name, action,
+             quantity_change, previous_quantity, new_quantity)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
+            product_id,
             product_id,
             product_name,
             movement_action,
