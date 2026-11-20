@@ -123,6 +123,16 @@ def init_db():
                 RENAME TO stock_movements
             """)
 
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_products_name_category
+            ON products(LOWER(name), LOWER(category))
+        """)
+
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_stock_movements_product_id
+            ON stock_movements(product_id, id DESC)
+        """)
+
         conn.commit()
 
     except sqlite3.Error:
