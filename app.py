@@ -145,38 +145,121 @@ def init_db():
 with app.app_context():
     init_db()
 
+
 @app.route("/")
 def home():
     conn = get_db()
 
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+    search = request.args.get("search", "").strip()
+    category = request.args.get("category", "all")
+    sort = request.args.get("sort", "default")
+
+    if page < 1:
+        page = 1
+
+    # Build search and category filters
+    filters = []
+    filter_params = []
+
+    if search:
+        filters.append(
+            "(LOWER(name) LIKE ? OR LOWER(category) LIKE ?)"
+        )
+        search_value = f"%{search.lower()}%"
+        filter_params.extend([search_value, search_value])
+
+    if category != "all":
+        filters.append("LOWER(category) = LOWER(?)")
+        filter_params.append(category)
+
+    where_clause = ""
+    if filters:
+        where_clause = "WHERE " + " AND ".join(filters)
+
+    # Count filtered products
+    filtered_products_count = conn.execute(
+        f"SELECT COUNT(*) FROM products {where_clause}",
+        filter_params
+    ).fetchone()[0]
+
+    # Global product count
+    total_products = conn.execute(
+        "SELECT COUNT(*) FROM products"
+    ).fetchone()[0]
+
+    # Calculate pagination
+    total_pages = (filtered_products_count + per_page - 1) // per_page
+
+    if total_pages > 0 and page > total_pages:
+        page = total_pages
+
+    if total_pages == 0:
+        page = 1
+
+    offset = (page - 1) * per_page
+
+    # Sorting options
+    sort_options = {
+        "default": "id DESC",
+        "name-asc": "name COLLATE NOCASE ASC",
+        "quantity-asc": "quantity ASC",
+        "price-asc": "price ASC",
+        "price-desc": "price DESC"
+    }
+
+    if sort not in sort_options:
+        sort = "default"
+
+    order_by = sort_options[sort]
+
+    # Fetch all available categories
+    categories = conn.execute("""
+        SELECT DISTINCT category
+        FROM products
+        ORDER BY category COLLATE NOCASE
+    """).fetchall()
+
+    # Fetch products for current page
     products = conn.execute(
-        "SELECT * FROM products ORDER BY id DESC"
+        f"""
+        SELECT * FROM products
+        {where_clause}
+        ORDER BY {order_by}
+        LIMIT ? OFFSET ?
+        """,
+        (*filter_params, per_page, offset)
     ).fetchall()
 
-    low_stock_products = [
-        product for product in products
-        if 0 < product["quantity"] <= 5
-    ]
+    # Global low-stock products
+    low_stock_products = conn.execute("""
+        SELECT * FROM products
+        WHERE quantity > 0 AND quantity <= 5
+        ORDER BY id DESC
+    """).fetchall()
 
-    out_of_stock_products = [
-        product for product in products
-        if product["quantity"] == 0
-    ]
+    # Global out-of-stock products
+    out_of_stock_products = conn.execute("""
+        SELECT * FROM products
+        WHERE quantity = 0
+        ORDER BY id DESC
+    """).fetchall()
 
-    total_products = len(products)
-    low_stock = sum(
-        1 for product in products
-        if 0 < product["quantity"] <= 5
-    )
-    out_of_stock = sum(
-        1 for product in products
-        if product["quantity"] == 0
-    )
+    low_stock = conn.execute("""
+        SELECT COUNT(*) FROM products
+        WHERE quantity > 0 AND quantity <= 5
+    """).fetchone()[0]
 
-    total_inventory_value = sum(
-        product["quantity"] * product["price"]
-        for product in products
-    )
+    out_of_stock = conn.execute("""
+        SELECT COUNT(*) FROM products
+        WHERE quantity = 0
+    """).fetchone()[0]
+
+    total_inventory_value = conn.execute("""
+        SELECT COALESCE(SUM(quantity * price), 0)
+        FROM products
+    """).fetchone()[0]
 
     # Category-wise inventory analytics
     category_analytics = conn.execute("""
@@ -193,6 +276,12 @@ def home():
     return render_template(
         "index.html",
         products=products,
+        categories=categories,
+        page=page,
+        total_pages=total_pages,
+        search=search,
+        category=category,
+        sort=sort,
         total_products=total_products,
         low_stock=low_stock,
         out_of_stock=out_of_stock,

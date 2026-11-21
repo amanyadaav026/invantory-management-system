@@ -48,7 +48,7 @@
                     <span class="breadcrumb-separator">/</span>
                     <span class="breadcrumb-current">Overview</span>
                 </div>
-                
+
                 <div class="user-profile">
                     <span class="avatar">ST</span>
                     <span>StockTrack</span>
@@ -106,7 +106,7 @@
                         </div>
                     </div>
                 </section>
-                
+
                 <section class="stock-alerts-section" id="stock-alerts">
                     <div class="section-heading">
                         <div>
@@ -117,10 +117,10 @@
                             {{ low_stock_products|length + out_of_stock_products|length }} Alerts
                         </span>
                     </div>
-                    
+
                     {% if low_stock_products or out_of_stock_products %}
                         <div class="stock-alerts-list">
-                            
+
                             {% for product in out_of_stock_products %}
                                 <div class="stock-alert-item alert-out">
                                     <div class="alert-icon">!</div>
@@ -134,7 +134,7 @@
                                        class="alert-view-link">View</a>
                                 </div>
                             {% endfor %}
-                            
+
                             {% for product in low_stock_products %}
                                 <div class="stock-alert-item alert-low">
                                     <div class="alert-icon">!</div>
@@ -158,7 +158,7 @@
                             </div>
                         </div>
                     {% endif %}
-                    
+
                     <script type="application/json" id="analytics-chart-data">
                     [
                         {% for category in category_analytics %}
@@ -170,7 +170,7 @@
                         {% endfor %}
                     ]
                     </script>
-                    
+
                     <!-- Dashboard Charts -->
                     <div class="dashboard-charts">
                         <div class="chart-card">
@@ -200,7 +200,7 @@
                         </div>
                     </div>
                 </section>
-                
+
                 <section class="analytics-section" id="analytics">
                     <div class="section-heading">
                         <div>
@@ -208,7 +208,7 @@
                             <p>Understand your inventory category by category.</p>
                         </div>
                     </div>
-                    
+
                     {% if category_analytics %}
                         {% set max_value = namespace(amount=0) %}
                         {% for category in category_analytics %}
@@ -216,11 +216,11 @@
                                 {% set max_value.amount = category.inventory_value %}
                             {% endif %}
                         {% endfor %}
-                        
+
                         <div class="analytics-grid">
                             {% for category in category_analytics %}
                                 {% set bar_width = (category.inventory_value / max_value.amount * 100) if max_value.amount > 0 else 0 %}
-                                
+
                                 <div class="analytics-card">
                                     <div class="analytics-card-top">
                                         <div class="analytics-category-icon">▦</div>
@@ -229,18 +229,18 @@
                                             {{ 'product' if category.product_count == 1 else 'products' }}
                                         </span>
                                     </div>
-                                    
+
                                     <h3>{{ category.category }}</h3>
-                                    
+
                                     <div class="analytics-value">
                                         ₹{{ "%.2f"|format(category.inventory_value or 0) }}
                                     </div>
                                     <p class="analytics-value-label">Inventory value</p>
-                                    
+
                                     <div class="analytics-bar-track">
                                         <div class="analytics-bar-fill"style="width: {{ bar_width }}%"></div>
                                     </div>
-                                    
+
                                     <div class="analytics-card-footer">
                                         <span>Total quantity</span>
                                         <strong>{{ category.total_quantity or 0 }} units</strong>
@@ -263,12 +263,12 @@
                             <h2><span class="heading-icon">◇</span> Products</h2>
                             <p>View, search and manage your inventory.</p>
                         </div>
-                        
+
                         <div class="section-actions">
                             <a href="{{ url_for('export_inventory') }}" class="secondary-button">
                                 ↓ Export CSV
                             </a>
-                            
+
                             <form action="{{ url_for('import_inventory') }}" method="POST" enctype="multipart/form-data" class="import-form">
                                 <label for="csv-file" class="secondary-button">
                                     ↑ Import CSV
@@ -278,7 +278,7 @@
                                     Upload
                                 </button>
                             </form>
-                            
+
                             <a href="#add-product" class="primary-button">
                                 ＋ Add Product
                             </a>
@@ -286,32 +286,78 @@
 
                     </div>
 
-                    <div class="filter-toolbar">
-                        <div class="search-control">
-                            <span>⌕</span>
-                            <input type="text" id="search-input" placeholder="Search products by name...">
-                        </div>
+                    <form method="GET" action="{{ url_for('home') }}#product-list" id="product-filter-form">
+                        <div class="filter-toolbar">
 
-                        <div class="filter-control">
-                            <label for="category-filter">Category</label>
-                            <select id="category-filter">
-                                <option value="all">All Categories</option>
-                            </select>
-                        </div>
+                            <div class="search-control">
+                                <span>⌕</span>
+                                <input
+                                    type="search"
+                                    id="search-input"
+                                    name="search"
+                                    placeholder="Search products by name..."
+                                    value="{{ search }}"
+                                >
+                            </div>
 
-                        <div class="filter-control sort-control">
-                            <label for="sort-products">Sort by</label>
-                            <select id="sort-products">
-                                <option value="default">Default Order</option>
-                                <option value="name-asc">Product Name (A–Z)</option>
-                                <option value="quantity-asc">Quantity (Low to High)</option>
-                                <option value="price-asc">Price (Low to High)</option>
-                                <option value="price-desc">Price (High to Low)</option>
-                            </select>
-                        </div>
+                            <div class="filter-control">
+                                <label for="category-filter">Category</label>
+                                <select id="category-filter" name="category">
+                                    <option value="all" {% if category == "all" %}selected{% endif %}>
+                                        All Categories
+                                    </option>
 
-                        <button type="button" id="clear-search" class="secondary-button">↻ Clear</button>
-                    </div>
+                                    {% for item in categories %}
+                                        <option
+                                            value="{{ item['category'] }}"
+                                            {% if category == item['category'] %}selected{% endif %}
+                                        >
+                                            {{ item['category'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="filter-control sort-control">
+                                <label for="sort-products">Sort by</label>
+                                <select id="sort-products" name="sort">
+                                    <option value="default" {% if sort == "default" %}selected{% endif %}>
+                                        Default Order
+                                    </option>
+                                    <option value="name-asc" {% if sort == "name-asc" %}selected{% endif %}>
+                                        Product Name (A–Z)
+                                    </option>
+                                    <option value="quantity-asc" {% if sort == "quantity-asc" %}selected{% endif %}>
+                                        Quantity (Low to High)
+                                    </option>
+                                    <option value="price-asc" {% if sort == "price-asc" %}selected{% endif %}>
+                                        Price (Low to High)
+                                    </option>
+                                    <option value="price-desc" {% if sort == "price-desc" %}selected{% endif %}>
+                                        Price (High to Low)
+                                    </option>
+                                </select>
+                            </div>
+
+                            <button
+                                type="submit"
+                                id="apply-filters"
+                                class="secondary-button"
+                            >
+                                Apply
+                            </button>
+
+                            <button
+                                type="button"
+                                id="clear-search"
+                                class="secondary-button"
+                            >
+                                ↻ Clear
+                            </button>
+
+                        </div>
+                    </form>
+
 
                     <div class="table-wrapper">
                         <table>
@@ -360,7 +406,7 @@
                                                     aria-label="Stock quantity change"
                                                     required
                                                 >
-                                                
+
                                                 <button type="submit" name="action" value="in" class="stock-text-button stock-in-button">+ Stock In</button>
 
 
@@ -409,6 +455,37 @@
                     <div class="table-footer">
                         <span>Inventory products · Live database data</span>
                     </div>
+
+                    {% if total_pages > 1 %}
+                        <div class="pagination">
+
+                            {% if page > 1 %}
+                                <a href="{{ url_for('home',
+                                    page=page-1,
+                                    search=search,
+                                    category=category,
+                                    sort=sort
+                                ) }}#product-list" class="pagination-button">
+                                    ← Previous
+                                </a>
+                            {% endif %}
+
+                            <span class="pagination-info">
+                                Page {{ page }} of {{ total_pages }}
+                            </span>
+
+                            {% if page < total_pages %}
+                                <a href="{{ url_for('home',
+                                    page=page+1,
+                                    search=search,
+                                    category=category,
+                                    sort=sort
+                                ) }}#product-list" class="pagination-button">
+                                    Next →
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 </section>
 
                 <section class="bottom-grid">
@@ -452,10 +529,10 @@
                                 <p>Current stock status</p>
                             </div>
                         </div>
-                        
+
                         <div class="stock-summary">
                             {% set in_stock = total_products - low_stock - out_of_stock %}
-                            
+
                             <div class="stock-summary-item">
                                 <div class="stock-summary-row">
                                     <span class="legend-dot legend-green"></span>
@@ -469,7 +546,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="stock-summary-item">
                                 <div class="stock-summary-row">
                                     <span class="legend-dot legend-orange"></span>
@@ -483,7 +560,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="stock-summary-item">
                                 <div class="stock-summary-row">
                                     <span class="legend-dot legend-red"></span>

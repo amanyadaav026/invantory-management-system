@@ -1982,3 +1982,42 @@ td.product-name-cell {
         height: 260px;
     }
 }
+
+/* ========================================
+   Day 8: Inventory Pagination
+======================================== */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 18px 0;
+}
+
+.pagination-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 16px;
+    background: #ffffff;
+    color: var(--blue);
+    border: 1px solid #dbe2f0;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.pagination-button:hover {
+    background: var(--blue);
+    color: #ffffff;
+    border-color: var(--blue);
+}
+
+.pagination-info {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
