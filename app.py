@@ -53,6 +53,31 @@ def init_db():
                 price REAL NOT NULL
             )
         """)
+        # Add SKU column if it does not exist
+        product_columns = {
+            row["name"]
+            for row in conn.execute(
+                "PRAGMA table_info(products)"
+            ).fetchall()
+        }
+
+        if "sku" not in product_columns:
+            conn.execute(
+                "ALTER TABLE products ADD COLUMN sku TEXT"
+            )
+
+        # Generate SKU for existing products
+        conn.execute("""
+            UPDATE products
+            SET sku = 'ST-' || printf('%04d', id)
+            WHERE sku IS NULL OR sku = ''
+        """)
+
+        # Prevent duplicate SKUs
+        conn.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_products_sku
+            ON products(sku)
+        """)
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS stock_movements (
@@ -296,7 +321,7 @@ def export_inventory():
     conn = get_db()
 
     products = conn.execute(
-        "SELECT id, name, category, quantity, price FROM products ORDER BY id ASC"
+        "SELECT id, sku, name, category, quantity, price FROM products ORDER BY id ASC"
     ).fetchall()
 
     output = io.StringIO()
@@ -304,6 +329,7 @@ def export_inventory():
 
     writer.writerow([
         "Product ID",
+        "SKU",
         "Product Name",
         "Category",
         "Quantity",
@@ -314,6 +340,7 @@ def export_inventory():
     for product in products:
         writer.writerow([
             product["id"],
+            product["sku"],
             product["name"],
             product["category"],
             product["quantity"],
@@ -409,12 +436,20 @@ def import_inventory():
                 duplicates += 1
                 continue
 
-            conn.execute(
+            cursor = conn.execute(
                 """
                 INSERT INTO products (name, category, quantity, price)
                 VALUES (?, ?, ?, ?)
                 """,
                 (name, category, quantity, price)
+            )
+
+            product_id = cursor.lastrowid
+            sku = f"ST-{product_id:04d}"
+
+            conn.execute(
+                "UPDATE products SET sku = ? WHERE id = ?",
+                (sku, product_id)
             )
 
             imported += 1
@@ -466,10 +501,18 @@ def add_product():
         flash("Duplicate product! This product already exists in this category.", "error")
         return redirect(url_for("home"))
 
-    conn.execute(
+    cursor = conn.execute(
         """INSERT INTO products (name, category, quantity, price)
            VALUES (?, ?, ?, ?)""",
         (name, category, quantity, price)
+    )
+
+    product_id = cursor.lastrowid
+    sku = f"ST-{product_id:04d}"
+
+    conn.execute(
+        "UPDATE products SET sku = ? WHERE id = ?",
+        (sku, product_id)
     )
 
     conn.commit()

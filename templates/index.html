@@ -364,6 +364,7 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>SKU</th>
                                     <th>Product Name</th>
                                     <th>Category</th>
                                     <th>Quantity</th>
@@ -377,6 +378,7 @@
                                 {% for product in products %}
                                 <tr class="{% if product.quantity == 0 %}out-of-stock{% elif product.quantity <= 5 %}low-stock{% endif %}">
                                     <td>{{ product.id }}</td>
+                                    <td>{{ product.sku }}</td>
                                     <td class="product-name-cell">
                                         <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-details-link">
                                             {{ product.name }}
@@ -445,7 +447,7 @@
                                 </tr>
                                 {% else %}
                                 <tr class="empty-products-row">
-                                    <td colspan="7">No products added yet.</td>
+                                    <td colspan="8">No products added yet.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
