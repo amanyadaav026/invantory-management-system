@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Response, g, jsonify
+from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 import sqlite3
 import csv
@@ -15,6 +16,8 @@ logging.basicConfig(
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+
+csrf = CSRFProtect(app)
 
 if not app.secret_key:
     raise RuntimeError("SECRET_KEY is missing. Please configure it in the .env file.")
