@@ -1,5 +1,5 @@
 
-/* Step 7: Server-side Product Filters */
+/* Day 10: AJAX Product Filters */
 
 const filterForm = document.getElementById("product-filter-form");
 const searchInput = document.getElementById("search-input");
@@ -7,47 +7,137 @@ const clearSearchButton = document.getElementById("clear-search");
 const categoryFilter = document.getElementById("category-filter");
 const sortSelect = document.getElementById("sort-products");
 
-if (filterForm) {
-
+const productList = document.getElementById("product-list");
+const paginationContainer = document.getElementById("pagination-container");
+const resultCountElement = document.getElementById("product-result-count");
+if (
+    filterForm &&
+    searchInput &&
+    categoryFilter &&
+    sortSelect &&
+    productList &&
+    paginationContainer
+) {
     let searchTimer;
 
-    // Live Search with debounce
+    async function loadProducts(page = 1, historyMode = "replace") {
+        const url = new URL(filterForm.action, window.location.origin);
+
+        url.searchParams.set("page", page);
+        url.searchParams.set("search", searchInput.value.trim());
+        url.searchParams.set("category", categoryFilter.value);
+        url.searchParams.set("sort", sortSelect.value);
+        url.hash = "product-list";
+
+        if (historyMode === "push") {
+            window.history.pushState({}, "", url);
+        } else if (historyMode === "replace") {
+            window.history.replaceState({}, "", url);
+        }
+
+        productList.setAttribute("aria-busy", "true");
+
+        try {
+            const response = await fetch(
+                url.pathname + url.search,
+                {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Unable to load products.");
+            }
+
+            const data = await response.json();
+
+            productList.innerHTML = data.rows_html;
+            paginationContainer.innerHTML = data.pagination_html;
+            if (resultCountElement) {
+                resultCountElement.textContent =
+                `${data.result_count} matching products`;
+            }
+
+        } catch (error) {
+            console.error("AJAX Search Error:", error);
+        } finally {
+            productList.removeAttribute("aria-busy");
+        }
+    }
+
+    // Live search with debounce
     searchInput.addEventListener("input", function () {
         clearTimeout(searchTimer);
 
         searchTimer = setTimeout(function () {
-            filterForm.submit();
-        }, 400);
+            loadProducts(1, "replace");
+        }, 350);
     });
 
-    // Search immediately when Enter is pressed
-    searchInput.addEventListener("keydown", function (event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            clearTimeout(searchTimer);
-            filterForm.submit();
-        }
+    // Prevent normal form submission
+    filterForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        clearTimeout(searchTimer);
+        loadProducts(1, "replace");
     });
 
     // Category filtering
     categoryFilter.addEventListener("change", function () {
-        filterForm.submit();
+        clearTimeout(searchTimer);
+        loadProducts(1, "push");
     });
 
     // Sorting
     sortSelect.addEventListener("change", function () {
-        filterForm.submit();
+        clearTimeout(searchTimer);
+        loadProducts(1, "push");
     });
 
     // Clear all filters
-    clearSearchButton.addEventListener("click", function () {
-        clearTimeout(searchTimer);
+    if (clearSearchButton) {
+        clearSearchButton.addEventListener("click", function () {
+            clearTimeout(searchTimer);
 
-        searchInput.value = "";
-        categoryFilter.value = "all";
-        sortSelect.value = "default";
+            searchInput.value = "";
+            categoryFilter.value = "all";
+            sortSelect.value = "default";
 
-        filterForm.submit();
+            loadProducts(1, "push");
+        });
+    }
+
+    // AJAX pagination
+    paginationContainer.addEventListener("click", function (event) {
+        const paginationLink = event.target.closest("a.pagination-button");
+
+        if (!paginationLink) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const pageUrl = new URL(paginationLink.href);
+        const nextPage = Number(pageUrl.searchParams.get("page"));
+
+        if (nextPage) {
+            loadProducts(nextPage, "push");
+        }
+    });
+
+    // Browser Back and Forward support
+    window.addEventListener("popstate", function () {
+        const params = new URLSearchParams(window.location.search);
+
+        searchInput.value = params.get("search") || "";
+        categoryFilter.value = params.get("category") || "all";
+        sortSelect.value = params.get("sort") || "default";
+
+        const page = Number(params.get("page")) || 1;
+
+        loadProducts(page, "none");
     });
 }
 

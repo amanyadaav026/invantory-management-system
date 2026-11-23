@@ -1,0 +1,32 @@
+
+{% if total_pages > 1 %}
+    <div class="pagination">
+
+        {% if page > 1 %}
+            <a href="{{ url_for('home',
+                page=page-1,
+                search=search,
+                category=category,
+                sort=sort
+            ) }}#product-list" class="pagination-button">
+                ← Previous
+            </a>
+        {% endif %}
+
+        <span class="pagination-info">
+            Page {{ page }} of {{ total_pages }}
+        </span>
+
+        {% if page < total_pages %}
+            <a href="{{ url_for('home',
+                page=page+1,
+                search=search,
+                category=category,
+                sort=sort
+            ) }}#product-list" class="pagination-button">
+                Next →
+            </a>
+        {% endif %}
+
+    </div>
+{% endif %}

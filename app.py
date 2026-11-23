@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, Response, g
+from flask import Flask, render_template, request, redirect, url_for, flash, Response, g, jsonify
 from dotenv import load_dotenv
 import sqlite3
 import csv
@@ -174,6 +174,7 @@ with app.app_context():
 @app.route("/")
 def home():
     conn = get_db()
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
     page = request.args.get("page", 1, type=int)
     per_page = 10
@@ -190,10 +191,21 @@ def home():
 
     if search:
         filters.append(
-            "(LOWER(name) LIKE ? OR LOWER(category) LIKE ?)"
+            """
+            (
+                LOWER(name) LIKE ?
+                OR LOWER(category) LIKE ?
+                OR LOWER(sku) LIKE ?
+            )
+            """
         )
+
         search_value = f"%{search.lower()}%"
-        filter_params.extend([search_value, search_value])
+        filter_params.extend([
+            search_value,
+            search_value,
+            search_value
+        ])
 
     if category != "all":
         filters.append("LOWER(category) = LOWER(?)")
@@ -257,6 +269,30 @@ def home():
         (*filter_params, per_page, offset)
     ).fetchall()
 
+    # Return only product rows and pagination for AJAX requests
+    if is_ajax:
+        rows_html = render_template(
+            "_product_rows.html",
+            products=products
+        )
+
+        pagination_html = render_template(
+            "_pagination.html",
+            page=page,
+            total_pages=total_pages,
+            search=search,
+            category=category,
+            sort=sort
+        )
+
+        return jsonify({
+            "rows_html": rows_html,
+            "pagination_html": pagination_html,
+            "result_count": filtered_products_count,
+            "page": page,
+            "total_pages": total_pages
+        })
+
     # Global low-stock products
     low_stock_products = conn.execute("""
         SELECT * FROM products
@@ -308,6 +344,7 @@ def home():
         category=category,
         sort=sort,
         total_products=total_products,
+        filtered_products_count=filtered_products_count,
         low_stock=low_stock,
         out_of_stock=out_of_stock,
         total_inventory_value=total_inventory_value,

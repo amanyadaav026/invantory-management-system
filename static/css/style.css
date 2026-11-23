@@ -2021,3 +2021,11 @@ td.product-name-cell {
     font-size: 13px;
     font-weight: 600;
 }
+
+/* Day 10: AJAX Search Loading State */
+
+#product-list[aria-busy="true"] {
+    opacity: 0.45;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}

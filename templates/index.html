@@ -375,119 +375,21 @@
                             </thead>
 
                             <tbody id="product-list">
-                                {% for product in products %}
-                                <tr class="{% if product.quantity == 0 %}out-of-stock{% elif product.quantity <= 5 %}low-stock{% endif %}">
-                                    <td>{{ product.id }}</td>
-                                    <td>{{ product.sku }}</td>
-                                    <td class="product-name-cell">
-                                        <a href="{{ url_for('product_details', product_id=product.id) }}" class="product-details-link">
-                                            {{ product.name }}
-                                        </a>
-                                    </td>
-                                    <td>{{ product.category }}</td>
-                                    <td>{{ product.quantity }}</td>
-                                    <td>₹{{ "%.2f"|format(product.price) }}</td>
-                                    <td>
-                                        {% if product.quantity == 0 %}
-                                            <span class="stock-badge out-of-stock-badge">Out of Stock</span>
-                                        {% elif product.quantity <= 5 %}
-                                            <span class="stock-badge low-stock-badge">Low Stock</span>
-                                        {% else %}
-                                            <span class="stock-badge in-stock-badge">In Stock</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <form action="{{ url_for('update_stock', product_id=product.id) }}" method="POST" class="stock-action-form">
-                                                <input
-                                                    type="number"
-                                                    name="quantity_change"
-                                                    min="1"
-                                                    step="1"
-                                                    placeholder="Qty"
-                                                    aria-label="Stock quantity change"
-                                                    required
-                                                >
-
-                                                <button type="submit" name="action" value="in" class="stock-text-button stock-in-button">+ Stock In</button>
-
-
-                                                <button type="submit" name="action" value="out" class="stock-text-button stock-out-button">− Stock Out</button>
-                                            </form>
-                                            <details class="edit-details">
-                                                <summary class="action-button edit-button" title="Edit product">✎</summary>
-                                                <form class="inline-edit-form" action="{{ url_for('edit_product', product_id=product.id) }}" method="POST">
-                                                    <h3>Edit Product #{{ product.id }}</h3>
-
-                                                    <label>Product Name
-                                                        <input type="text" name="name" value="{{ product.name }}" required>
-                                                    </label>
-
-                                                    <label>Category
-                                                        <input type="text" name="category" value="{{ product.category }}" required>
-                                                    </label>
-
-                                                    <label>Quantity
-                                                        <input type="number" name="quantity" value="{{ product.quantity }}" min="0" step="1" required>
-                                                    </label>
-
-                                                    <label>Price (₹)
-                                                        <input type="number" name="price" value="{{ product.price }}" min="0" step="0.01" required>
-                                                    </label>
-
-                                                    <button type="submit" class="primary-button">Save Changes</button>
-                                                </form>
-                                            </details>
-
-                                            <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST">
-                                                <button type="submit" class="action-button delete-button" title="Delete product" onclick="return confirm('Are you sure you want to delete this product?');">×</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr class="empty-products-row">
-                                    <td colspan="8">No products added yet.</td>
-                                </tr>
-                                {% endfor %}
+                                {% include "_product_rows.html" %}
                             </tbody>
                         </table>
                     </div>
 
                     <div class="table-footer">
+                        <span id="product-result-count" aria-live="polite">
+                            Showing {{ products|length }} of {{ filtered_products_count if filtered_products_count is defined else products|length }} products
+                        </span>
                         <span>Inventory products · Live database data</span>
                     </div>
 
-                    {% if total_pages > 1 %}
-                        <div class="pagination">
-
-                            {% if page > 1 %}
-                                <a href="{{ url_for('home',
-                                    page=page-1,
-                                    search=search,
-                                    category=category,
-                                    sort=sort
-                                ) }}#product-list" class="pagination-button">
-                                    ← Previous
-                                </a>
-                            {% endif %}
-
-                            <span class="pagination-info">
-                                Page {{ page }} of {{ total_pages }}
-                            </span>
-
-                            {% if page < total_pages %}
-                                <a href="{{ url_for('home',
-                                    page=page+1,
-                                    search=search,
-                                    category=category,
-                                    sort=sort
-                                ) }}#product-list" class="pagination-button">
-                                    Next →
-                                </a>
-                            {% endif %}
-                        </div>
-                    {% endif %}
+                    <div id="pagination-container">
+                        {% include "_pagination.html" %}
+                    </div>
                 </section>
 
                 <section class="bottom-grid">
