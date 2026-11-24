@@ -226,6 +226,24 @@ a {
     font-weight: 750;
 }
 
+.logout-button {
+    padding: 8px 13px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #ffffff;
+    color: var(--heading);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
 .dashboard-main {
     width: 100%;
     max-width: 1600px;

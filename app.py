@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, Response, g, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, Response, g, jsonify, session
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 import sqlite3
 import csv
 import io
@@ -21,6 +23,10 @@ csrf = CSRFProtect(app)
 
 if not app.secret_key:
     raise RuntimeError("SECRET_KEY is missing. Please configure it in the .env file.")
+
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = False
 
 def get_db():
     if "db" not in g:
@@ -54,6 +60,14 @@ def init_db():
                 category TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
                 price REAL NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
         # Add SKU column if it does not exist
@@ -173,8 +187,77 @@ def init_db():
 with app.app_context():
     init_db()
 
+def create_user(username, password):
+    conn = get_db()
+
+    password_hash = generate_password_hash(
+        password,
+        method="pbkdf2:sha256"
+    )
+
+    try:
+        conn.execute(
+            """
+            INSERT INTO users (username, password_hash)
+            VALUES (?, ?)
+            """,
+            (username, password_hash)
+        )
+
+        conn.commit()
+        return True
+
+    except sqlite3.IntegrityError:
+        conn.rollback()
+        return False
+
+def login_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please login to access this page.", "error")
+            return redirect(url_for("login"))
+
+        return view(*args, **kwargs)
+
+    return wrapped_view
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        conn = get_db()
+
+        user = conn.execute(
+            "SELECT * FROM users WHERE username = ?",
+            (username,)
+        ).fetchone()
+
+        if user and check_password_hash(
+            user["password_hash"], password
+        ):
+            session.clear()
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+
+            flash("Login successful!", "success")
+            return redirect(url_for("home"))
+
+        flash("Invalid username or password.", "error")
+
+    return render_template("login.html")
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("login"))
 
 @app.route("/")
+@login_required
 def home():
     conn = get_db()
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
@@ -357,6 +440,7 @@ def home():
     )
 
 @app.route("/export-inventory")
+@login_required
 def export_inventory():
     conn = get_db()
 
@@ -400,6 +484,7 @@ def export_inventory():
     )
 
 @app.route("/import-inventory", methods=["POST"])
+@login_required
 def import_inventory():
     if "file" not in request.files:
         flash("Please select a CSV file.")
@@ -509,6 +594,7 @@ def import_inventory():
     return redirect(url_for("home"))
 
 @app.route("/add-product", methods=["POST"])
+@login_required
 def add_product():
     name = request.form["name"].strip()
     category = request.form["category"].strip()
@@ -561,6 +647,7 @@ def add_product():
 
 
 @app.route("/delete-product/<int:product_id>", methods=["POST"])
+@login_required
 def delete_product(product_id):
     conn = get_db()
 
@@ -575,6 +662,7 @@ def delete_product(product_id):
 
 
 @app.route("/edit-product/<int:product_id>", methods=["POST"])
+@login_required
 def edit_product(product_id):
     name = request.form["name"].strip()
     category = request.form["category"].strip()
@@ -645,6 +733,7 @@ def edit_product(product_id):
     return redirect(url_for("home"))
 
 @app.route("/update-stock/<int:product_id>", methods=["POST"])
+@login_required
 def update_stock(product_id):
     try:
         quantity_change = int(request.form["quantity_change"])
@@ -722,6 +811,7 @@ def update_stock(product_id):
     return redirect(url_for("home"))
 
 @app.route("/stock-history")
+@login_required
 def stock_history():
     conn = get_db()
 
@@ -735,6 +825,7 @@ def stock_history():
     return render_template("stock_history.html", movements=movements)
 
 @app.route("/product/<int:product_id>")
+@login_required
 def product_details(product_id):
     conn = get_db()
 
