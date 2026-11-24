@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings | StockTrack</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/account_settings.css') }}">
+</head>
+<body>
+    <div class="settings-container">
+        <header class="settings-header">
+            <a href="{{ url_for('home') }}" class="brand">◆ StockTrack</a>
+            <a href="{{ url_for('home') }}" class="back-link">← Back to Dashboard</a>
+        </header>
+
+        <main class="settings-content">
+            <div class="page-heading">
+                <span class="eyebrow">ACCOUNT</span>
+                <h1>Account Settings</h1>
+                <p>Manage your account security and password.</p>
+            </div>
+
+            <section class="settings-card">
+                <div class="card-heading">
+                    <div class="card-icon">🔒</div>
+                    <div>
+                        <h2>Change Password</h2>
+                        <p>Update your password to keep your account secure.</p>
+                    </div>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="flash-message {{ category }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('account_settings') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="form-group">
+                        <label for="current_password">Current Password</label>
+                        <input
+                            type="password"
+                            id="current_password"
+                            name="current_password"
+                            placeholder="Enter current password"
+                            autocomplete="current-password"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_password">New Password</label>
+                        <input
+                            type="password"
+                            id="new_password"
+                            name="new_password"
+                            placeholder="Enter new password"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+                        <small>Use at least 8 characters.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm New Password</label>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            placeholder="Confirm new password"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="submit-button">
+                        Update Password
+                    </button>
+                </form>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

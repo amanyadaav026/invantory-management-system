@@ -256,6 +256,52 @@ def logout():
     flash("You have been logged out.", "success")
     return redirect(url_for("login"))
 
+@app.route("/account-settings", methods=["GET", "POST"])
+@login_required
+def account_settings():
+    if request.method == "POST":
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        conn = get_db()
+
+        user = conn.execute(
+            "SELECT * FROM users WHERE id = ?",
+            (session["user_id"],)
+        ).fetchone()
+
+        if not check_password_hash(
+            user["password_hash"], current_password
+        ):
+            flash("Current password is incorrect.", "error")
+
+        elif len(new_password) < 8:
+            flash("New password must be at least 8 characters long.", "error")
+
+        elif new_password != confirm_password:
+            flash("New passwords do not match.", "error")
+
+        elif current_password == new_password:
+            flash("New password must be different from current password.", "error")
+
+        else:
+            password_hash = generate_password_hash(
+                new_password,
+                method="pbkdf2:sha256"
+            )
+
+            conn.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (password_hash, session["user_id"])
+            )
+            conn.commit()
+
+            flash("Password changed successfully!", "success")
+            return redirect(url_for("account_settings"))
+
+    return render_template("account_settings.html")
+
 @app.route("/")
 @login_required
 def home():
