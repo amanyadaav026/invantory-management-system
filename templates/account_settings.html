@@ -21,16 +21,7 @@
                 <p>Manage your account security and password.</p>
             </div>
 
-            <section class="settings-card">
-                <div class="card-heading">
-                    <div class="card-icon">🔒</div>
-                    <div>
-                        <h2>Change Password</h2>
-                        <p>Update your password to keep your account secure.</p>
-                    </div>
-                </div>
-
-                {% with messages = get_flashed_messages(with_categories=true) %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <div class="flash-messages">
                             {% for category, message in messages %}
@@ -40,10 +31,55 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                {% endwith %}
+            {% endwith %}
+
+            <section class="settings-card">
+                <div class="card-heading">
+                    <div class="card-icon">👤</div>
+                    <div>
+                        <h2>Profile Information</h2>
+                        <p>Manage your StockTrack account username.</p>
+                    </div>
+                </div>
 
                 <form method="POST" action="{{ url_for('account_settings') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="update_username">
+
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            value="{{ session.get('username', '') }}"
+                            placeholder="Enter your username"
+                            minlength="3"
+                            maxlength="30"
+                            autocomplete="username"
+                            required
+                        >
+                        <small>Username must be between 3 and 30 characters.</small>
+                    </div>
+
+                    <button type="submit" class="submit-button">
+                        Update Username
+                    </button>
+                </form>
+            </section>
+
+            <section class="settings-card">
+                <div class="card-heading">
+                    <div class="card-icon">🔒</div>
+                    <div>
+                        <h2>Change Password</h2>
+                        <p>Update your password to keep your account secure.</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('account_settings') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="change_password">
 
                     <div class="form-group">
                         <label for="current_password">Current Password</label>

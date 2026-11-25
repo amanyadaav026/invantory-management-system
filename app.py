@@ -260,45 +260,86 @@ def logout():
 @login_required
 def account_settings():
     if request.method == "POST":
-        current_password = request.form.get("current_password", "")
-        new_password = request.form.get("new_password", "")
-        confirm_password = request.form.get("confirm_password", "")
+        action = request.form.get("action")
 
         conn = get_db()
 
-        user = conn.execute(
-            "SELECT * FROM users WHERE id = ?",
-            (session["user_id"],)
-        ).fetchone()
+        # Update Username
+        if action == "update_username":
+            new_username = request.form.get("username", "").strip()
 
-        if not check_password_hash(
-            user["password_hash"], current_password
-        ):
-            flash("Current password is incorrect.", "error")
+            if not new_username:
+                flash("Username cannot be empty.", "error")
 
-        elif len(new_password) < 8:
-            flash("New password must be at least 8 characters long.", "error")
+            elif len(new_username) < 3 or len(new_username) > 30:
+                flash("Username must be between 3 and 30 characters.", "error")
 
-        elif new_password != confirm_password:
-            flash("New passwords do not match.", "error")
+            else:
+                existing_user = conn.execute(
+                    "SELECT id FROM users WHERE username = ? AND id != ?",
+                    (new_username, session["user_id"])
+                ).fetchone()
 
-        elif current_password == new_password:
-            flash("New password must be different from current password.", "error")
+                if existing_user:
+                    flash("This username is already taken.", "error")
 
-        else:
-            password_hash = generate_password_hash(
-                new_password,
-                method="pbkdf2:sha256"
-            )
+                else:
+                    try:
+                        conn.execute(
+                            "UPDATE users SET username = ? WHERE id = ?",
+                            (new_username, session["user_id"])
+                        )
+                        conn.commit()
 
-            conn.execute(
-                "UPDATE users SET password_hash = ? WHERE id = ?",
-                (password_hash, session["user_id"])
-            )
-            conn.commit()
+                        session["username"] = new_username
 
-            flash("Password changed successfully!", "success")
+                        flash("Username updated successfully!", "success")
+
+                    except sqlite3.IntegrityError:
+                        conn.rollback()
+                        flash("This username is already taken.", "error")
+
             return redirect(url_for("account_settings"))
+
+        # Change Password
+        elif action == "change_password":
+            current_password = request.form.get("current_password", "")
+            new_password = request.form.get("new_password", "")
+            confirm_password = request.form.get("confirm_password", "")
+
+            user = conn.execute(
+                "SELECT * FROM users WHERE id = ?",
+                (session["user_id"],)
+            ).fetchone()
+
+            if not user or not check_password_hash(
+                user["password_hash"], current_password
+            ):
+                flash("Current password is incorrect.", "error")
+
+            elif len(new_password) < 8:
+                flash("New password must be at least 8 characters long.", "error")
+
+            elif new_password != confirm_password:
+                flash("New passwords do not match.", "error")
+
+            elif current_password == new_password:
+                flash("New password must be different from current password.", "error")
+
+            else:
+                password_hash = generate_password_hash(
+                    new_password,
+                    method="pbkdf2:sha256"
+                )
+
+                conn.execute(
+                    "UPDATE users SET password_hash = ? WHERE id = ?",
+                    (password_hash, session["user_id"])
+                )
+                conn.commit()
+
+                flash("Password changed successfully!", "success")
+                return redirect(url_for("account_settings"))
 
     return render_template("account_settings.html")
 
