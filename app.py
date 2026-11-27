@@ -70,6 +70,24 @@ def init_db():
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Add role column to existing users table
+        user_columns = {
+            row["name"]
+            for row in conn.execute(
+                "PRAGMA table_info(users)"
+            ).fetchall()
+        }
+
+        if "role" not in user_columns:
+            conn.execute("""
+                ALTER TABLE users
+                ADD COLUMN role TEXT NOT NULL DEFAULT 'staff'
+                CHECK (role IN ('admin', 'staff'))
+            """)
+            conn.execute(
+                "UPDATE users SET role = 'admin' WHERE username = ?",
+                ("admin",)
+            )
         # Add SKU column if it does not exist
         product_columns = {
             row["name"]
@@ -222,6 +240,21 @@ def login_required(view):
 
     return wrapped_view
 
+def admin_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please login to access this page.", "error")
+            return redirect(url_for("login"))
+
+        if session.get("role") != "admin":
+            flash("You do not have permission to access this page.", "error")
+            return redirect(url_for("home"))
+
+        return view(*args, **kwargs)
+
+    return wrapped_view
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -241,7 +274,7 @@ def login():
             session.clear()
             session["user_id"] = user["id"]
             session["username"] = user["username"]
-
+            session["role"] = user["role"]
             flash("Login successful!", "success")
             return redirect(url_for("home"))
 
@@ -527,7 +560,7 @@ def home():
     )
 
 @app.route("/export-inventory")
-@login_required
+@admin_required
 def export_inventory():
     conn = get_db()
 
@@ -571,7 +604,7 @@ def export_inventory():
     )
 
 @app.route("/import-inventory", methods=["POST"])
-@login_required
+@admin_required
 def import_inventory():
     if "file" not in request.files:
         flash("Please select a CSV file.")
@@ -681,7 +714,7 @@ def import_inventory():
     return redirect(url_for("home"))
 
 @app.route("/add-product", methods=["POST"])
-@login_required
+@admin_required
 def add_product():
     name = request.form["name"].strip()
     category = request.form["category"].strip()
@@ -734,7 +767,7 @@ def add_product():
 
 
 @app.route("/delete-product/<int:product_id>", methods=["POST"])
-@login_required
+@admin_required
 def delete_product(product_id):
     conn = get_db()
 
@@ -749,7 +782,7 @@ def delete_product(product_id):
 
 
 @app.route("/edit-product/<int:product_id>", methods=["POST"])
-@login_required
+@admin_required
 def edit_product(product_id):
     name = request.form["name"].strip()
     category = request.form["category"].strip()

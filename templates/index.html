@@ -23,9 +23,11 @@
                 <a class="nav-link" href="#products">
                     <span class="nav-icon">◇</span> Products
                 </a>
+                {% if session.get('role') == 'admin' %}
                 <a class="nav-link" href="#add-product">
                     <span class="nav-icon">＋</span> Add Product
                 </a>
+                {% endif %}
                 <a class="nav-link" href="#stock-overview">
                     <span class="nav-icon">▥</span> Stock Overview
                 </a>
@@ -273,6 +275,7 @@
                         </div>
 
                         <div class="section-actions">
+                            {% if session.get('role') == 'admin' %}
                             <a href="{{ url_for('export_inventory') }}" class="secondary-button">
                                 ↓ Export CSV
                             </a>
@@ -291,6 +294,7 @@
                             <a href="#add-product" class="primary-button">
                                 ＋ Add Product
                             </a>
+                            {% endif %}
                         </div>
 
                     </div>
@@ -402,6 +406,7 @@
                 </section>
 
                 <section class="bottom-grid">
+                    {% if session.get('role') == 'admin' %}
                     <section class="products-section add-product-section" id="add-product">
                         <div class="section-heading">
                             <div>
@@ -435,6 +440,7 @@
                             <button type="submit" class="primary-button form-submit">＋ Add Product</button>
                         </form>
                     </section>
+                    {% endif %}
 
                     <section class="products-section stock-overview" id="stock-overview">
                         <div class="section-heading">
